@@ -244,9 +244,12 @@ router.get("/getMember", async function (req, res, next) {
         const convertIDRoleAccount = resultgetRoleAccountByID.map(item => {
           return item.MaVaiTro;
         });
+        let resuiltDetailContract = await sql.getDetailContractByIDThanhVien(req.query.id);
+        const handleDetailContract = formatDateResults(resuiltDetailContract,true)
         const newFilteredData = {
           ...filteredData[0],
-          MaVaiTro: convertIDRoleAccount
+          MaVaiTro: convertIDRoleAccount,
+          HopDong:handleDetailContract
         };
         res.status(200).json(newFilteredData)
       }
@@ -371,6 +374,27 @@ router.get("/getMember", async function (req, res, next) {
     res.status(500).json({ success: false, message: 'Đã xảy ra lỗi trong quá trình xử lý', error: error });
   }
 });
+function formatDateResults(results) {
+  results.forEach(item => {
+    const date = new Date(item.NgayLamHopDong);
+    const date2 = new Date(item.NgayHetHanHopDong);
+
+    const formattedDate = formatDate(date);
+    const formattedDate2 = formatDate(date2);
+      item.SoHopDong=item.SoHopDong
+      item.MaHopDong = item.MaHopDong;
+      item.Ngay = formattedDate;
+      item.NgayHetHan = formattedDate2;
+    
+  });
+
+  return results;
+}
+function formatDate(date) {
+  return (`0${date.getDate()}`).slice(-2) + '/' +
+    (`0${date.getMonth() + 1}`).slice(-2) + '/' +
+    date.getFullYear();
+}
 router.put('/changeInfo', newupload.single('HinhAnh'), async function (req, res, next) {
   const ss = req.headers.ss;
   //nếu có hình ảnh thì lưu đường dẫn hình

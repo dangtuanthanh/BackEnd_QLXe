@@ -750,7 +750,16 @@ async function getDataSelected(recordIds) {
   }
 }
 
-
+async function getDetailContractByIDThanhVien(MaThanhVien) {
+  try {
+    let result = await pool.request()
+      .input('MaThanhVien', sql.Int, MaThanhVien)
+      .execute('member_getMember_getDetailContractByIDThanhVien');
+    return result.recordset;
+  } catch (error) {
+    throw error;
+  }
+}
 
 
 module.exports = {
@@ -785,4 +794,5 @@ module.exports = {
   changePassword: changePassword,
   getDataSelected: getDataSelected,
 
+  getDetailContractByIDThanhVien:getDetailContractByIDThanhVien
 };
