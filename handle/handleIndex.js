@@ -33,8 +33,12 @@ async function insertMember(data) {
 
       const MaThanhVien = resultInsertMember.recordset[0][''];
       if (IDVaiTro != null) {
-        IDVaiTro = IDVaiTro.split(',')
-        await insertRolerMember(MaThanhVien, IDVaiTro)
+        IDVaiTro = IDVaiTro.split(',').map(item => {
+          return +item;
+        });
+        IDVaiTro.map(async (item) => {
+          await insertRolerMember(MaThanhVien, item)
+        })
         return { success: true, message: "Thêm Dữ Liệu Thành Công!" };
       } else return { success: true, message: "Thêm Dữ Liệu Thành Công!" };
     }
@@ -42,16 +46,16 @@ async function insertMember(data) {
     throw error;
   }
 }
-async function insertRolerMember(MaThanhVien, IDVaiTro) {
+// async function insertRolerMember(MaThanhVien, IDVaiTro) {
+//   console.log('vào đây');
+//   // for(let id of IDVaiTro) {
+//   //   await pool.request()
+//   //     .input('MaThanhVien', sql.Int, MaThanhVien)  
+//   //     .input('MaVaiTro', sql.Int, id)
+//   //     .execute('member_insertMember_insertRolerMember');
+//   // }
 
-  IDVaiTro.forEach(async (ID) => {
-    await pool.request()
-      .input('MaThanhVien', sql.Int, MaThanhVien)
-      .input('MaVaiTro', sql.Int, ID)
-      .execute('member_insertMember_insertRolerMember');
-  })
-
-}
+// }
 
 //hàm đăng nhập
 async function login(data) {
@@ -794,5 +798,5 @@ module.exports = {
   changePassword: changePassword,
   getDataSelected: getDataSelected,
 
-  getDetailContractByIDThanhVien:getDetailContractByIDThanhVien
+  getDetailContractByIDThanhVien: getDetailContractByIDThanhVien
 };

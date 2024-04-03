@@ -112,8 +112,10 @@ router.get("/getContract", async function (req, res, next) {
         if (req.query.searchBy === 'HetHan') {
           // Lọc danh sách
           result = result.filter(item => {
-            const nowMoment = moment(now);
-            const dateMoment = moment(item.NgayHetHanHopDong, 'DD/MM/YYYY'); 
+            const nowMoment = moment(now).startOf('day'); 
+            const dateMoment = moment(item.NgayHetHanHopDong, 'DD/MM/YYYY').startOf('day'); 
+            console.log('nowMoment',nowMoment);
+            console.log('dateMoment',dateMoment);
             // So sánh với giờ hiện tại
             if (dateMoment.isBefore(nowMoment)) {
               return item;

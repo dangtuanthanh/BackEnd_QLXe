@@ -10,7 +10,7 @@ var indexRouter = require('./routes/index');
 // var indexCaLamViec = require('./routes/CaLamViec');
 // var indexKhachHang = require('./routes/KhachHang');
 // var indexKho = require('./routes/Kho');
-// var indexThucDon = require('./routes/ThucDon');
+var indexBangDieuKhien = require('./routes/BangDieuKhien');
  var indexHopDong = require('./routes/HopDong');
 var indexDichVu = require('./routes/DichVu');
 var indexXe = require('./routes/Xe');
@@ -39,7 +39,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'img')));//thiết lập cho phép truy cập file static
 
-app.use('/', indexRouter,indexXe,indexDichVu,indexHopDong);
+app.use('/', indexRouter,indexXe,indexDichVu,indexHopDong,indexBangDieuKhien);
 //app.use('/', indexRouter,indexBanVaKhuVuc,indexCaLamViec,indexKhachHang,indexKho,indexThucDon,indexHoaDon,indexBep,indexBangDieuKhien);
 app.use('/users', usersRouter);
 
