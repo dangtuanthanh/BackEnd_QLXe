@@ -27,14 +27,14 @@ router.get("/BangDieuKhien", function (req, res, next) {
   res.render("index", { title: "Trang BangDieuKhien" });
 });
 
-/*  Quản lý bàn và khu vực */
-// Lấy số bàn đang có khách
-router.get("/getOccupiedTables", async function (req, res, next) {
+
+// Lấy tổng số xe
+router.get("/getTotalCar", async function (req, res, next) {
   //xử lý dữ liệu vào
   const ss = req.headers.ss;
   try {
     if (await sql.checkSessionAndRole(ss, 'getDashboard')) {
-      let result = await sql.getOccupiedTables();
+      let result = await sql.getTotalCar();
       res.status(200).json(result)
     } else {
       res.status(401).json({ success: false, message: "Đăng Nhập Đã Hết Hạn Hoặc Bạn Không Có Quyền Truy Cập!" });
@@ -44,13 +44,13 @@ router.get("/getOccupiedTables", async function (req, res, next) {
     res.status(500).json({ success: false, message: 'Đã xảy ra lỗi trong quá trình xử lý', error: error });
   }
 });
-// Lấy số hoá đơn hôm nay
-router.get("/getInvoiceToday", async function (req, res, next) {
+// Lấy số tổng số thành viên
+router.get("/getTotalMember", async function (req, res, next) {
   //xử lý dữ liệu vào
   const ss = req.headers.ss;
   try {
     if (await sql.checkSessionAndRole(ss, 'getDashboard')) {
-      let result = await sql.getInvoiceToday();
+      let result = await sql.getTotalMember();
       res.status(200).json(result)
     } else {
       res.status(401).json({ success: false, message: "Đăng Nhập Đã Hết Hạn Hoặc Bạn Không Có Quyền Truy Cập!" });
@@ -60,13 +60,13 @@ router.get("/getInvoiceToday", async function (req, res, next) {
     res.status(500).json({ success: false, message: 'Đã xảy ra lỗi trong quá trình xử lý', error: error });
   }
 });
-// Lấy số doanh thu hôm nay
-router.get("/getRevenueToday", async function (req, res, next) {
+// Lấy số hợp đồng năm nay
+router.get("/getYearContract", async function (req, res, next) {
   //xử lý dữ liệu vào
   const ss = req.headers.ss;
   try {
     if (await sql.checkSessionAndRole(ss, 'getDashboard')) {
-      let result = await sql.getRevenueToday();
+      let result = await sql.getYearContract();
       res.status(200).json(result)
     } else {
       res.status(401).json({ success: false, message: "Đăng Nhập Đã Hết Hạn Hoặc Bạn Không Có Quyền Truy Cập!" });
@@ -76,13 +76,13 @@ router.get("/getRevenueToday", async function (req, res, next) {
     res.status(500).json({ success: false, message: 'Đã xảy ra lỗi trong quá trình xử lý', error: error });
   }
 });
-// Lấy số doanh thu tháng này
-router.get("/getRevenueMonth", async function (req, res, next) {
+// Lấy số doanh thu năm này
+router.get("/getRevenueYear", async function (req, res, next) {
   //xử lý dữ liệu vào
   const ss = req.headers.ss;
   try {
     if (await sql.checkSessionAndRole(ss, 'getDashboard')) {
-      let result = await sql.getRevenueMonth();
+      let result = await sql.getRevenueYear();
       res.status(200).json(result)
     } else {
       res.status(401).json({ success: false, message: "Đăng Nhập Đã Hết Hạn Hoặc Bạn Không Có Quyền Truy Cập!" });
@@ -92,13 +92,15 @@ router.get("/getRevenueMonth", async function (req, res, next) {
     res.status(500).json({ success: false, message: 'Đã xảy ra lỗi trong quá trình xử lý', error: error });
   }
 });
-// Lấy số doanh thu tháng này
-router.get("/getListRevenueMonth", async function (req, res, next) {
+
+
+// Lấy danh sách doanh thu năm này
+router.get("/getListRevenueYear", async function (req, res, next) {
   //xử lý dữ liệu vào
   const ss = req.headers.ss;
   try {
     if (await sql.checkSessionAndRole(ss, 'getDashboard')) {
-      let result = await sql.getListRevenueMonth();
+      let result = await sql.getListRevenueYear(req.query.oldYear,req.query.year);
       res.status(200).json(result)
     } else {
       res.status(401).json({ success: false, message: "Đăng Nhập Đã Hết Hạn Hoặc Bạn Không Có Quyền Truy Cập!" });

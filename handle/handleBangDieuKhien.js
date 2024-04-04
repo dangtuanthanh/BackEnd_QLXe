@@ -8,6 +8,8 @@ async function checkSessionAndRole(ss, permission) {
       .request()
       .input("MaDangNhap", sql.NVarChar, ss)
       .query('EXEC loginAndPermission_checkSessionAndRole_getInfoByMaDangNhap @MaDangNhap');
+
+    // .query(`SELECT IDNhanVien, HanDangNhap FROM NhanVien WHERE MaDangNhap = @MaDangNhap AND NhanVien.DaXoa = 0`);
     if (result.recordset.length === 0) {
       console.log("Không tìm thấy người dùng với mã đăng nhập:", ss);
       return false;
@@ -21,8 +23,8 @@ async function checkSessionAndRole(ss, permission) {
         //Kiểm tra vai trò
         let resultVaiTro = await pool
           .request()
-          .input('IDNhanVien', sql.Int, result.recordset[0].IDNhanVien)
-          .query('EXEC loginAndPermission_checkSessionAndRole_getPermissionByIDNhanVien @IDNhanVien');
+          .input('MaThanhVien', sql.Int, result.recordset[0].MaThanhVien)
+          .query('EXEC loginAndPermission_checkSessionAndRole_getPermissionByMaThanhVien @MaThanhVien');
         const permissions = resultVaiTro.recordset.map((row) => row.TenQuyen);;
         for (const p of permissions) {
           if (p === permission) {
@@ -39,132 +41,111 @@ async function checkSessionAndRole(ss, permission) {
     throw error;
   }
 }
-//xử lý lấy số lượng bàn ăn đang hoạt động
-async function getOccupiedTables() {
+//xử lý lấy tổng số xe
+async function getTotalCar() {
   try {
-    let result = await pool.request().query('EXEC dashboard_getOccupiedTables');
+    let result = await pool.request().query('EXEC dashboard_getTotalCar');
     return result.recordset.length;
   } catch (error) {
     throw error;
   }
 }
-//xử lý lấy số lượng hoá đơn hôm nay
-async function getInvoiceToday() {
+//xử lý lấy tổng thành viên
+async function getTotalMember() {
   try {
-    // Lấy ngày hiện tại
-    const date = new Date();
-    let result = await pool.request()
-      .input('date', sql.Date, date)
-      .query('EXEC dashboard_getInvoiceToday @date');
+    let result = await pool.request().query('EXEC dashboard_getTotalMember');
     return result.recordset.length;
   } catch (error) {
     throw error;
   }
 }
-//xử lý lấy số lượng doanh thu hôm nay
-async function getRevenueToday() {
+
+//xử lý lấy số lượng hợp đồng năm nay
+async function getYearContract() {
   try {
     // Lấy ngày hiện tại
     const date = new Date();
+    const year = date.getFullYear();
     let result = await pool.request()
-      .input('date', sql.Date, date)
-      .query('EXEC dashboard_getRevenueToday @date');
-    return result.recordset[0].TotalRevenue;
+      .input('year', sql.Int, year)
+      .query('EXEC dashboard_getYearContract @year');
+    return result.recordset[0].CountContract;
   } catch (error) {
     throw error;
   }
 }
-//xử lý lấy số lượng doanh thu tháng
-async function getRevenueMonth() {
+
+//xử lý lấy doanh thu năm nay
+async function getRevenueYear() {
   try {
     // Lấy ngày hiện tại
     const date = new Date();
-    date.setDate(1);
+    const year = date.getFullYear();
     let result = await pool.request()
-      .input('date', sql.Date, date)
-      .query('EXEC dashboard_getRevenueMonth @date');
-    return result.recordset[0].TotalRevenue;
+      .input('year', sql.Int, year)
+      .query('EXEC dashboard_getRevenueYear @year');
+    return result.recordset[0].RevenueYear;
   } catch (error) {
     throw error;
   }
 }
+
 //xử lý lấy số lượng doanh thu tháng
-async function getListRevenueMonth() {
-
+async function getListRevenueYear(oldYear, year) {
   try {
-
-    const date = new Date();
-
-    const currentMonth = {
-      month: date.getMonth() + 1,
-      year: date.getFullYear()
-    };
-
-    const previousMonth = {
-      month: date.getMonth(),
-      year: date.getFullYear()
-    };
-
-    if (previousMonth.month === 0) {
-      previousMonth.month = 12;
-      previousMonth.year -= 1;
+    const resultOldYear = await pool.request()
+      .input('year', sql.Int, oldYear)
+      .execute('dashboard_getListRevenueYear');
+    const resultYear = await pool.request()
+      .input('year', sql.Int, year)
+      .execute('dashboard_getListRevenueYear');
+    const dataOldYear = formatData(resultOldYear.recordset);
+    const dataYear = formatData(resultYear.recordset);
+    return {
+      oldYear: dataOldYear,
+      year: dataYear
     }
-    const result = await pool.request()
-      .input('month', currentMonth.month)
-      .input('year', currentMonth.year)
-      .execute('dashboard_getListRevenueMonth');
-    const result2 = await pool.request()
-      .input('month', previousMonth.month)
-      .input('year', previousMonth.year)
-      .execute('dashboard_getListRevenueMonth');
-      const currentData = formatData(result.recordset,currentMonth.month,currentMonth.year);
-      const previousData = formatData(result2.recordset,previousMonth.month,previousMonth.year);
-    
-      return {
-        current: currentData,
-        previous: previousData
-      }
-    
-
   } catch (error) {
     throw error;
   }
 }
-function getDaysInMonth(month, year) {
-  return Array.from(
-    {length: new Date(year, month, 0).getDate()}, 
-    (_, i) => i + 1
-  );
-}
-function formatData(records,month,year) {
-  const daysInMonth = getDaysInMonth(month, year);
+// function getDaysInMonth(month, year) {
+//   return Array.from(
+//     {length: new Date(year, month, 0).getDate()}, 
+//     (_, i) => i + 1
+//   );
+// }
+function formatData(records) {
+  const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
   let processedData = [];
 
-  daysInMonth.forEach(day => {
-    let record = records.find(r => r.Day === day);
+  months.forEach(month => {
+    let record = records.find(r => {
+      return r.Month === month;
+    });
 
-    if(record) {
+    if (record) {
       processedData.push({
-        Day: day, 
-        Revenue: record.Revenue  
+        Month: month,
+        Revenue: record.Revenue
       });
     } else {
       processedData.push({
-        Day: day,
-        Revenue: 0  
+        Month: month,
+        Revenue: 0
       });
     }
   });
 
   return processedData;
-
 }
 module.exports = {
   checkSessionAndRole: checkSessionAndRole,
-  getOccupiedTables: getOccupiedTables,
-  getInvoiceToday: getInvoiceToday,
-  getRevenueToday: getRevenueToday,
-  getRevenueMonth: getRevenueMonth,
-  getListRevenueMonth: getListRevenueMonth
+  getTotalCar: getTotalCar,
+  getTotalMember: getTotalMember,
+  getYearContract: getYearContract,
+  getRevenueYear: getRevenueYear,
+
+  getListRevenueYear: getListRevenueYear
 };

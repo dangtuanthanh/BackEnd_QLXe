@@ -120,10 +120,10 @@ async function updateRegistry(data) {
       .input('HinhAnh', sql.NVarChar, data.HinhAnh)
       .input('MaXe', sql.Int, data.MaXe)
       .input('LanDangKiem', sql.Int, data.LanDangKiem)
-      .input('NgayDangKiem', sql.Date, data.NgayDangKiem)
-      .input('ThoiGian', sql.Int, data.ThoiGian)
-      .input('NoiDangKiem', sql.NVarChar, data.NoiDangKiem)
-      .input('NguoiDiDangKiem', sql.NVarChar, data.NguoiDiDangKiem)
+      .input('NgayDangKiem', sql.Date, data.NgayDangKiem ==='null'? null : data.NgayDangKiem)
+      .input('ThoiGian', sql.Int, data.ThoiGian ==='null'? null : data.ThoiGian)
+      .input('NoiDangKiem', sql.NVarChar, data.NoiDangKiem ==='null'? null : data.NoiDangKiem)
+      .input('NguoiDiDangKiem', sql.NVarChar, data.NguoiDiDangKiem ==='null'? null : data.NguoiDiDangKiem)
       .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung=='true' ? true : false)
       .execute('service_updateRegistry_updateRegistry');
     return { success: true };
@@ -207,10 +207,10 @@ async function updateEmblem(data) {
     .input('HinhAnh', sql.NVarChar, data.HinhAnh)
     .input('MaXe', sql.Int, data.MaXe)
     .input('LanPhuHieu', sql.Int, data.LanPhuHieu)
-    .input('NgayCapPhuHieu', sql.Date, data.NgayCapPhuHieu)
-    .input('ThoiGian', sql.Int, data.ThoiGian)
-    .input('NoiCapPhuHieu', sql.NVarChar, data.NoiCapPhuHieu)
-    .input('NguoiDiCapPhuHieu', sql.NVarChar, data.NguoiDiCapPhuHieu)
+    .input('NgayCapPhuHieu', sql.Date, data.NgayCapPhuHieu ==='null'? null : data.NgayCapPhuHieu)
+    .input('ThoiGian', sql.Int, data.ThoiGian ==='null'? null : data.ThoiGian)
+    .input('NoiCapPhuHieu', sql.NVarChar, data.NoiCapPhuHieu ==='null'? null : data.NoiCapPhuHieu)
+    .input('NguoiDiCapPhuHieu', sql.NVarChar, data.NguoiDiCapPhuHieu ==='null'? null : data.NguoiDiCapPhuHieu)
       .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung=='true' ? true : false)
       .execute('service_updateEmblem_updateEmblem');
     return { success: true };
@@ -296,10 +296,10 @@ async function updateInsurance(data) {
     .input('HinhAnh', sql.NVarChar, data.HinhAnh)
     .input('MaXe', sql.Int, data.MaXe)
     .input('LanMuaBaoHiem', sql.Int, data.LanMuaBaoHiem)
-    .input('NgayMuaBaoHiem', sql.Date, data.NgayMuaBaoHiem)
-    .input('ThoiGian', sql.Int, data.ThoiGian)
-    .input('LoaiBaoHiem', sql.NVarChar, data.LoaiBaoHiem)
-    .input('NguoiMuaBaoHiem', sql.NVarChar, data.NguoiMuaBaoHiem)
+    .input('NgayMuaBaoHiem', sql.Date, data.NgayMuaBaoHiem ==='null'? null : data.NgayMuaBaoHiem)
+    .input('ThoiGian', sql.Int, data.ThoiGian ==='null'? null : data.ThoiGian)
+    .input('LoaiBaoHiem', sql.NVarChar, data.LoaiBaoHiem ==='null'? null : data.LoaiBaoHiem)
+    .input('NguoiMuaBaoHiem', sql.NVarChar, data.NguoiMuaBaoHiem ==='null'? null : data.NguoiMuaBaoHiem)
       .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung=='true' ? true : false)
       .execute('service_updateInsurance_updateInsurance');
     return { success: true };
@@ -386,12 +386,12 @@ async function updateLocate(data) {
     .input('HinhAnh', sql.NVarChar, data.HinhAnh)
       .input('MaXe', sql.Int, data.MaXe)
       .input('LanMuaDinhVi', sql.Int, data.LanMuaDinhVi)
-      .input('NgayMua', sql.Date, data.NgayMua)
-      .input('ThoiGian', sql.Int, data.ThoiGian)
-      .input('URLDinhVi', sql.NVarChar, data.URLDinhVi)
-      .input('UserNameDinhVi', sql.VarChar, data.UserNameDinhVi)
-      .input('MatKhauDinhVi', sql.VarChar, data.MatKhauDinhVi)
-      .input('NguoiMuaDinhVi', sql.NVarChar, data.NguoiMuaDinhVi)
+      .input('NgayMua', sql.Date, data.NgayMua ==='null'? null : data.NgayMua)
+      .input('ThoiGian', sql.Int, data.ThoiGian ==='null'? null : data.ThoiGian)
+      .input('URLDinhVi', sql.NVarChar, data.URLDinhVi ==='null'? null : data.URLDinhVi)
+      .input('UserNameDinhVi', sql.VarChar, data.UserNameDinhVi ==='null'? null : data.UserNameDinhVi)
+      .input('MatKhauDinhVi', sql.VarChar, data.MatKhauDinhVi ==='null'? null : data.MatKhauDinhVi)
+      .input('NguoiMuaDinhVi', sql.NVarChar, data.NguoiMuaDinhVi ==='null'? null : data.NguoiMuaDinhVi)
       .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung=='true' ? true : false)
       .execute('service_updateLocate_updateLocate');
     return { success: true };

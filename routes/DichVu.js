@@ -59,19 +59,30 @@ router.get("/getRegistry", async function (req, res, next) {
   try {
     if (await sql.checkSessionAndRole(ss, 'getRegistry')) {
       let result = await sql.getRegistry();
-      result.forEach(item => {
-        const date = new Date(item.NgayDangKiem);
-        const date2 = new Date(item.NgayHetHan);
-        // Format date
-        const formattedDate = (`0${date.getDate()}`).slice(-2) + '/' +
-          (`0${date.getMonth() + 1}`).slice(-2) + '/' +
-          date.getFullYear();
+      const now = new Date();
+        result.forEach(item => {
+          const date = new Date(item.NgayDangKiem);
+          const date2 = new Date(item.NgayHetHan);
+          // Format date
+          const formattedDate = (`0${date.getDate()}`).slice(-2) + '/' +
+            (`0${date.getMonth() + 1}`).slice(-2) + '/' +
+            date.getFullYear();
           const formattedDate2 = (`0${date2.getDate()}`).slice(-2) + '/' +
-          (`0${date2.getMonth() + 1}`).slice(-2) + '/' +
-          date2.getFullYear();
-        item.NgayDangKiem = formattedDate;
-        item.NgayHetHan = formattedDate2;
-      });
+            (`0${date2.getMonth() + 1}`).slice(-2) + '/' +
+            date2.getFullYear();
+          item.NgayDangKiem = formattedDate;
+          item.NgayHetHan = formattedDate2;
+          const dateNow = new Date(now).setHours(0, 0, 0, 0);
+          const dateEnd = new Date(date2).setHours(0, 0, 0, 0);
+          const diffMs = dateNow - dateEnd;
+          const diffDays = Math.abs(Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+          if ((diffDays <= 7 && date2 > now) || diffDays == 0) {
+            item.SapHetHan = true;
+          } else {
+            item.SapHetHan = false;
+          }
+        });
+      
       //kiểm tra chức năng lấy 1 vai trò
       if (typeof req.query.id !== 'undefined' && !isNaN(req.query.id && typeof req.query.id2 !== 'undefined' && !isNaN(req.query.id2))) {
         const filteredData = result.filter(item => {
@@ -83,64 +94,95 @@ router.get("/getRegistry", async function (req, res, next) {
         res.status(200).json(filteredData[0])
       }
       else {
-        // tính năng tìm kiếm
-        if (typeof req.query.search !== 'undefined' && typeof req.query.searchBy !== 'undefined') {
-          // Danh sách các cột có dữ liệu tiếng Việt
-          const vietnameseColumns = ['NoiDangKiem', 'NguoiDiDangKiem'];
+        // tính năng lọc
+        if (req.query.searchBy === 'LanMoiNhat') {
+          // Lấy ra danh sách các Mã Xe duy nhất
+          const maXeList = [...new Set(result.map(item => item.MaXe))];
+          // Lọc ra item mới
+          const filteredResult = [];
+          maXeList.forEach(maXe => {
+            // Tìm item có Mã Xe là maXe và Lần Đăng Kiểm lớn nhất 
+            const maxItem = result
+              .filter(item => item.MaXe === maXe)
+              .sort((a, b) => b.LanDangKiem - a.LanDangKiem)[0];
 
-          // Lọc dữ liệu
-          const filteredData = result.filter((row) => {
-            const searchData = req.query.search;
-            const searchBy = req.query.searchBy;
-
-            // Lấy giá trị cột tìm kiếm
-            const columnData = row[searchBy];
-
-            //kiểm tra tìm kiếm chính xác
-            if (searchExact) {
-              // Kiểm tra xem cột có dữ liệu tiếng Việt hay không
-              const isVietnameseColumn = vietnameseColumns.includes(searchBy);
-
-              // Nếu cột là cột có dữ liệu tiếng Việt, sử dụng localeCompare để so sánh dữ liệu
-              if (isVietnameseColumn) {
-                if (typeof columnData === 'string') {
-                  return columnData.includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
-                } else if (columnData !== null) {
-                  return String(columnData).includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
-                }
-
-              } else {
-                // Nếu cột không có dữ liệu tiếng Việt, chỉ kiểm tra dữ liệu bình thường
-                if (typeof columnData === 'string') {
-                  return columnData.includes(searchData);
-                } else if (columnData !== null) {
-                  return String(columnData).includes(searchData);
-                }
-              }
-            } else {
-              if (typeof columnData === 'string') {
-                const lowerCaseColumnData = columnData.toLowerCase();
-                const lowerCaseSearchData = searchData.toLowerCase();
-                return lowerCaseColumnData.includes(lowerCaseSearchData);
-              }//cột dữ liệu có cột khác string
-              else if (typeof columnData === 'boolean' || typeof columnData === 'number') {
-                const stringColumnData = String(columnData);
-                const lowerCaseColumnData = stringColumnData.toLowerCase();
-                const lowerCaseSearchData = searchData.toLowerCase();
-                return lowerCaseColumnData.includes(lowerCaseSearchData);
-              } else if (columnData !== null) {
-                return false;
-              }
+            // Nếu có thì đưa vào mảng kết quả  
+            if (maxItem) {
+              filteredResult.push(maxItem);
             }
+          })
+          result = filteredResult
+        } else
+          // tính năng tìm kiếm
+          if (typeof req.query.search !== 'undefined' && typeof req.query.searchBy !== 'undefined') {
+            // Danh sách các cột có dữ liệu tiếng Việt
+            const vietnameseColumns = ['NoiDangKiem', 'NguoiDiDangKiem'];
+
+            // Lọc dữ liệu
+            const filteredData = result.filter((row) => {
+              const searchData = req.query.search;
+              const searchBy = req.query.searchBy;
+
+              // Lấy giá trị cột tìm kiếm
+              const columnData = row[searchBy];
+
+              //kiểm tra tìm kiếm chính xác
+              if (searchExact) {
+                // Kiểm tra xem cột có dữ liệu tiếng Việt hay không
+                const isVietnameseColumn = vietnameseColumns.includes(searchBy);
+
+                // Nếu cột là cột có dữ liệu tiếng Việt, sử dụng localeCompare để so sánh dữ liệu
+                if (isVietnameseColumn) {
+                  if (typeof columnData === 'string') {
+                    return columnData.includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
+                  } else if (columnData !== null) {
+                    return String(columnData).includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
+                  }
+
+                } else {
+                  // Nếu cột không có dữ liệu tiếng Việt, chỉ kiểm tra dữ liệu bình thường
+                  if (typeof columnData === 'string') {
+                    return columnData.includes(searchData);
+                  } else if (columnData !== null) {
+                    return String(columnData).includes(searchData);
+                  }
+                }
+              } else {
+                if (typeof columnData === 'string') {
+                  const lowerCaseColumnData = columnData.toLowerCase();
+                  const lowerCaseSearchData = searchData.toLowerCase();
+                  return lowerCaseColumnData.includes(lowerCaseSearchData);
+                }//cột dữ liệu có cột khác string
+                else if (typeof columnData === 'boolean' || typeof columnData === 'number') {
+                  const stringColumnData = String(columnData);
+                  const lowerCaseColumnData = stringColumnData.toLowerCase();
+                  const lowerCaseSearchData = searchData.toLowerCase();
+                  return lowerCaseColumnData.includes(lowerCaseSearchData);
+                } else if (columnData !== null) {
+                  return false;
+                }
+              }
 
 
 
-          });
+            });
 
-          // Lưu kết quả lọc vào biến result
-          result = filteredData;
-        }
+            // Lưu kết quả lọc vào biến result
+            result = filteredData;
+          }
         //sắp xếp 
+        //cột có ngày tháng 
+        function compareDate(date1, date2) {
+          const mDate1 = moment(date1, 'DD/MM/YYYY');
+          const mDate2 = moment(date2, 'DD/MM/YYYY');
+          if (mDate1.isBefore(mDate2)) {
+            return sortOrder === 'asc' ? -1 : 1;
+          }
+
+          if (mDate1.isAfter(mDate2)) {
+            return sortOrder === 'asc' ? 1 : -1;
+          }
+        }
         result.sort((a, b) => {
           if (sortBy === 'NoiDangKiem' || sortBy === 'NguoiDiDangKiem') {
             // Xử lý sắp xếp cột có tiếng Việt
@@ -157,7 +199,12 @@ router.get("/getRegistry", async function (req, res, next) {
             }
             const comparison = valA.localeCompare(valB, 'vi', { sensitivity: 'base' });
             return sortOrder === 'asc' ? comparison : -comparison;
-          } else {//cột không có tiếng Việt (chỉ có số và chữ tiếng Anh)
+          } else if (sortBy === 'NgayDangKiem') {
+            return compareDate(a.NgayDangKiem, b.NgayDangKiem, sortOrder);
+          } if (sortBy === 'NgayHetHan') {
+            return compareDate(a.NgayHetHan, b.NgayHetHan, sortOrder);
+          }
+          else {//cột không có tiếng Việt (chỉ có số và chữ tiếng Anh)
             if (a[sortBy] === null && b[sortBy] === null) {
               return 0;
             }
@@ -248,7 +295,7 @@ router.post('/insertRegistry', newupload.single('HinhAnh'), async function (req,
         const imagePathWithDomain = `http://${domain}/DangKiem/${newPath}`;
         data = {
           ...data,
-          HinhAnh:imagePathWithDomain
+          HinhAnh: imagePathWithDomain
         }
       }
       sql.insertRegistry(data)
@@ -279,7 +326,7 @@ router.put('/updateRegistry', newupload.single('HinhAnh'), async function (req, 
         const imagePathWithDomain = `http://${domain}/DangKiem/${newPath}`;
         data = {
           ...data,
-          HinhAnh:imagePathWithDomain
+          HinhAnh: imagePathWithDomain
         }
       }
       sql.updateRegistry(data)
@@ -328,6 +375,7 @@ router.get("/getEmblem", async function (req, res, next) {
   try {
     if (await sql.checkSessionAndRole(ss, 'getEmblem')) {
       let result = await sql.getEmblem();
+      const now = new Date();
       result.forEach(item => {
         const date = new Date(item.NgayCapPhuHieu);
         const date2 = new Date(item.NgayHetHan);
@@ -335,11 +383,20 @@ router.get("/getEmblem", async function (req, res, next) {
         const formattedDate = (`0${date.getDate()}`).slice(-2) + '/' +
           (`0${date.getMonth() + 1}`).slice(-2) + '/' +
           date.getFullYear();
-          const formattedDate2 = (`0${date2.getDate()}`).slice(-2) + '/' +
+        const formattedDate2 = (`0${date2.getDate()}`).slice(-2) + '/' +
           (`0${date2.getMonth() + 1}`).slice(-2) + '/' +
           date2.getFullYear();
         item.NgayCapPhuHieu = formattedDate;
         item.NgayHetHan = formattedDate2;
+        const dateNow = new Date(now).setHours(0, 0, 0, 0);
+        const dateEnd = new Date(date2).setHours(0, 0, 0, 0);
+        const diffMs = dateNow - dateEnd;
+        const diffDays = Math.abs(Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+        if ((diffDays <= 7 && date2 > now) || diffDays == 0) {
+          item.SapHetHan = true;
+        } else {
+          item.SapHetHan = false;
+        }
       });
       //kiểm tra chức năng lấy 1 vai trò
       if (typeof req.query.id !== 'undefined' && !isNaN(req.query.id && typeof req.query.id2 !== 'undefined' && !isNaN(req.query.id2))) {
@@ -352,64 +409,94 @@ router.get("/getEmblem", async function (req, res, next) {
         res.status(200).json(filteredData[0])
       }
       else {
-        // tính năng tìm kiếm
-        if (typeof req.query.search !== 'undefined' && typeof req.query.searchBy !== 'undefined') {
-          // Danh sách các cột có dữ liệu tiếng Việt
-          const vietnameseColumns = ['NoiCapPhuHieu', 'NguoiDiCapPhuHieu'];
+        // tính năng lọc
+        if (req.query.searchBy === 'LanMoiNhat') {
+          // Lấy ra danh sách các Mã Xe duy nhất
+          const maXeList = [...new Set(result.map(item => item.MaXe))];
+          // Lọc ra item mới
+          const filteredResult = [];
+          maXeList.forEach(maXe => {
+            // Tìm item có Mã Xe là maXe và Lần Đăng Kiểm lớn nhất 
+            const maxItem = result
+              .filter(item => item.MaXe === maXe)
+              .sort((a, b) => b.LanPhuHieu - a.LanPhuHieu)[0];
 
-          // Lọc dữ liệu
-          const filteredData = result.filter((row) => {
-            const searchData = req.query.search;
-            const searchBy = req.query.searchBy;
-
-            // Lấy giá trị cột tìm kiếm
-            const columnData = row[searchBy];
-
-            //kiểm tra tìm kiếm chính xác
-            if (searchExact) {
-              // Kiểm tra xem cột có dữ liệu tiếng Việt hay không
-              const isVietnameseColumn = vietnameseColumns.includes(searchBy);
-
-              // Nếu cột là cột có dữ liệu tiếng Việt, sử dụng localeCompare để so sánh dữ liệu
-              if (isVietnameseColumn) {
-                if (typeof columnData === 'string') {
-                  return columnData.includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
-                } else if (columnData !== null) {
-                  return String(columnData).includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
-                }
-
-              } else {
-                // Nếu cột không có dữ liệu tiếng Việt, chỉ kiểm tra dữ liệu bình thường
-                if (typeof columnData === 'string') {
-                  return columnData.includes(searchData);
-                } else if (columnData !== null) {
-                  return String(columnData).includes(searchData);
-                }
-              }
-            } else {
-              if (typeof columnData === 'string') {
-                const lowerCaseColumnData = columnData.toLowerCase();
-                const lowerCaseSearchData = searchData.toLowerCase();
-                return lowerCaseColumnData.includes(lowerCaseSearchData);
-              }//cột dữ liệu có cột khác string
-              else if (typeof columnData === 'boolean' || typeof columnData === 'number') {
-                const stringColumnData = String(columnData);
-                const lowerCaseColumnData = stringColumnData.toLowerCase();
-                const lowerCaseSearchData = searchData.toLowerCase();
-                return lowerCaseColumnData.includes(lowerCaseSearchData);
-              } else if (columnData !== null) {
-                return false;
-              }
+            // Nếu có thì đưa vào mảng kết quả  
+            if (maxItem) {
+              filteredResult.push(maxItem);
             }
+          })
+          result = filteredResult
+        } else
+          // tính năng tìm kiếm
+          if (typeof req.query.search !== 'undefined' && typeof req.query.searchBy !== 'undefined') {
+            // Danh sách các cột có dữ liệu tiếng Việt
+            const vietnameseColumns = ['NoiCapPhuHieu', 'NguoiDiCapPhuHieu'];
+
+            // Lọc dữ liệu
+            const filteredData = result.filter((row) => {
+              const searchData = req.query.search;
+              const searchBy = req.query.searchBy;
+
+              // Lấy giá trị cột tìm kiếm
+              const columnData = row[searchBy];
+
+              //kiểm tra tìm kiếm chính xác
+              if (searchExact) {
+                // Kiểm tra xem cột có dữ liệu tiếng Việt hay không
+                const isVietnameseColumn = vietnameseColumns.includes(searchBy);
+
+                // Nếu cột là cột có dữ liệu tiếng Việt, sử dụng localeCompare để so sánh dữ liệu
+                if (isVietnameseColumn) {
+                  if (typeof columnData === 'string') {
+                    return columnData.includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
+                  } else if (columnData !== null) {
+                    return String(columnData).includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
+                  }
+
+                } else {
+                  // Nếu cột không có dữ liệu tiếng Việt, chỉ kiểm tra dữ liệu bình thường
+                  if (typeof columnData === 'string') {
+                    return columnData.includes(searchData);
+                  } else if (columnData !== null) {
+                    return String(columnData).includes(searchData);
+                  }
+                }
+              } else {
+                if (typeof columnData === 'string') {
+                  const lowerCaseColumnData = columnData.toLowerCase();
+                  const lowerCaseSearchData = searchData.toLowerCase();
+                  return lowerCaseColumnData.includes(lowerCaseSearchData);
+                }//cột dữ liệu có cột khác string
+                else if (typeof columnData === 'boolean' || typeof columnData === 'number') {
+                  const stringColumnData = String(columnData);
+                  const lowerCaseColumnData = stringColumnData.toLowerCase();
+                  const lowerCaseSearchData = searchData.toLowerCase();
+                  return lowerCaseColumnData.includes(lowerCaseSearchData);
+                } else if (columnData !== null) {
+                  return false;
+                }
+              }
 
 
 
-          });
+            });
 
-          // Lưu kết quả lọc vào biến result
-          result = filteredData;
-        }
+            // Lưu kết quả lọc vào biến result
+            result = filteredData;
+          }
         //sắp xếp 
+        function compareDate(date1, date2) {
+          const mDate1 = moment(date1, 'DD/MM/YYYY');
+          const mDate2 = moment(date2, 'DD/MM/YYYY');
+          if (mDate1.isBefore(mDate2)) {
+            return sortOrder === 'asc' ? -1 : 1;
+          }
+
+          if (mDate1.isAfter(mDate2)) {
+            return sortOrder === 'asc' ? 1 : -1;
+          }
+        }
         result.sort((a, b) => {
           if (sortBy === 'NoiCapPhuHieu' || sortBy === 'NguoiDiCapPhuHieu') {
             // Xử lý sắp xếp cột có tiếng Việt
@@ -426,7 +513,12 @@ router.get("/getEmblem", async function (req, res, next) {
             }
             const comparison = valA.localeCompare(valB, 'vi', { sensitivity: 'base' });
             return sortOrder === 'asc' ? comparison : -comparison;
-          } else {//cột không có tiếng Việt (chỉ có số và chữ tiếng Anh)
+          } else if (sortBy === 'NgayCapPhuHieu') {
+            return compareDate(a.NgayCapPhuHieu, b.NgayCapPhuHieu, sortOrder);
+          } if (sortBy === 'NgayHetHan') {
+            return compareDate(a.NgayHetHan, b.NgayHetHan, sortOrder);
+          }
+          else {//cột không có tiếng Việt (chỉ có số và chữ tiếng Anh)
             if (a[sortBy] === null && b[sortBy] === null) {
               return 0;
             }
@@ -517,7 +609,7 @@ router.post('/insertEmblem', newuploadPhuHieu.single('HinhAnh'), async function 
         const imagePathWithDomain = `http://${domain}/PhuHieu/${newPath}`;
         data = {
           ...data,
-          HinhAnh:imagePathWithDomain
+          HinhAnh: imagePathWithDomain
         }
       }
       sql.insertEmblem(data)
@@ -548,7 +640,7 @@ router.put('/updateEmblem', newuploadPhuHieu.single('HinhAnh'), async function (
         const imagePathWithDomain = `http://${domain}/PhuHieu/${newPath}`;
         data = {
           ...data,
-          HinhAnh:imagePathWithDomain
+          HinhAnh: imagePathWithDomain
         }
       }
       sql.updateEmblem(data)
@@ -597,6 +689,7 @@ router.get("/getInsurance", async function (req, res, next) {
   try {
     if (await sql.checkSessionAndRole(ss, 'getInsurance')) {
       let result = await sql.getInsurance();
+      const now = new Date();
       result.forEach(item => {
         const date = new Date(item.NgayMuaBaoHiem);
         const date2 = new Date(item.NgayHetHan);
@@ -604,11 +697,20 @@ router.get("/getInsurance", async function (req, res, next) {
         const formattedDate = (`0${date.getDate()}`).slice(-2) + '/' +
           (`0${date.getMonth() + 1}`).slice(-2) + '/' +
           date.getFullYear();
-          const formattedDate2 = (`0${date2.getDate()}`).slice(-2) + '/' +
+        const formattedDate2 = (`0${date2.getDate()}`).slice(-2) + '/' +
           (`0${date2.getMonth() + 1}`).slice(-2) + '/' +
           date2.getFullYear();
         item.NgayMuaBaoHiem = formattedDate;
         item.NgayHetHan = formattedDate2;
+        const dateNow = new Date(now).setHours(0, 0, 0, 0);
+        const dateEnd = new Date(date2).setHours(0, 0, 0, 0);
+        const diffMs = dateNow - dateEnd;
+        const diffDays = Math.abs(Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+        if ((diffDays <= 7 && date2 > now) || diffDays == 0) {
+          item.SapHetHan = true;
+        } else {
+          item.SapHetHan = false;
+        }
       });
       //kiểm tra chức năng lấy 1 vai trò
       if (typeof req.query.id !== 'undefined' && !isNaN(req.query.id && typeof req.query.id2 !== 'undefined' && !isNaN(req.query.id2))) {
@@ -621,64 +723,94 @@ router.get("/getInsurance", async function (req, res, next) {
         res.status(200).json(filteredData[0])
       }
       else {
-        // tính năng tìm kiếm
-        if (typeof req.query.search !== 'undefined' && typeof req.query.searchBy !== 'undefined') {
-          // Danh sách các cột có dữ liệu tiếng Việt
-          const vietnameseColumns = ['LoaiBaoHiem', 'NguoiMuaBaoHiem'];
+        // tính năng lọc
+        if (req.query.searchBy === 'LanMoiNhat') {
+          // Lấy ra danh sách các Mã Xe duy nhất
+          const maXeList = [...new Set(result.map(item => item.MaXe))];
+          // Lọc ra item mới
+          const filteredResult = [];
+          maXeList.forEach(maXe => {
+            // Tìm item có Mã Xe là maXe và Lần Đăng Kiểm lớn nhất 
+            const maxItem = result
+              .filter(item => item.MaXe === maXe)
+              .sort((a, b) => b.LanMuaBaoHiem - a.LanMuaBaoHiem)[0];
 
-          // Lọc dữ liệu
-          const filteredData = result.filter((row) => {
-            const searchData = req.query.search;
-            const searchBy = req.query.searchBy;
-
-            // Lấy giá trị cột tìm kiếm
-            const columnData = row[searchBy];
-
-            //kiểm tra tìm kiếm chính xác
-            if (searchExact) {
-              // Kiểm tra xem cột có dữ liệu tiếng Việt hay không
-              const isVietnameseColumn = vietnameseColumns.includes(searchBy);
-
-              // Nếu cột là cột có dữ liệu tiếng Việt, sử dụng localeCompare để so sánh dữ liệu
-              if (isVietnameseColumn) {
-                if (typeof columnData === 'string') {
-                  return columnData.includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
-                } else if (columnData !== null) {
-                  return String(columnData).includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
-                }
-
-              } else {
-                // Nếu cột không có dữ liệu tiếng Việt, chỉ kiểm tra dữ liệu bình thường
-                if (typeof columnData === 'string') {
-                  return columnData.includes(searchData);
-                } else if (columnData !== null) {
-                  return String(columnData).includes(searchData);
-                }
-              }
-            } else {
-              if (typeof columnData === 'string') {
-                const lowerCaseColumnData = columnData.toLowerCase();
-                const lowerCaseSearchData = searchData.toLowerCase();
-                return lowerCaseColumnData.includes(lowerCaseSearchData);
-              }//cột dữ liệu có cột khác string
-              else if (typeof columnData === 'boolean' || typeof columnData === 'number') {
-                const stringColumnData = String(columnData);
-                const lowerCaseColumnData = stringColumnData.toLowerCase();
-                const lowerCaseSearchData = searchData.toLowerCase();
-                return lowerCaseColumnData.includes(lowerCaseSearchData);
-              } else if (columnData !== null) {
-                return false;
-              }
+            // Nếu có thì đưa vào mảng kết quả  
+            if (maxItem) {
+              filteredResult.push(maxItem);
             }
+          })
+          result = filteredResult
+        } else
+          // tính năng tìm kiếm
+          if (typeof req.query.search !== 'undefined' && typeof req.query.searchBy !== 'undefined') {
+            // Danh sách các cột có dữ liệu tiếng Việt
+            const vietnameseColumns = ['LoaiBaoHiem', 'NguoiMuaBaoHiem'];
+
+            // Lọc dữ liệu
+            const filteredData = result.filter((row) => {
+              const searchData = req.query.search;
+              const searchBy = req.query.searchBy;
+
+              // Lấy giá trị cột tìm kiếm
+              const columnData = row[searchBy];
+
+              //kiểm tra tìm kiếm chính xác
+              if (searchExact) {
+                // Kiểm tra xem cột có dữ liệu tiếng Việt hay không
+                const isVietnameseColumn = vietnameseColumns.includes(searchBy);
+
+                // Nếu cột là cột có dữ liệu tiếng Việt, sử dụng localeCompare để so sánh dữ liệu
+                if (isVietnameseColumn) {
+                  if (typeof columnData === 'string') {
+                    return columnData.includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
+                  } else if (columnData !== null) {
+                    return String(columnData).includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
+                  }
+
+                } else {
+                  // Nếu cột không có dữ liệu tiếng Việt, chỉ kiểm tra dữ liệu bình thường
+                  if (typeof columnData === 'string') {
+                    return columnData.includes(searchData);
+                  } else if (columnData !== null) {
+                    return String(columnData).includes(searchData);
+                  }
+                }
+              } else {
+                if (typeof columnData === 'string') {
+                  const lowerCaseColumnData = columnData.toLowerCase();
+                  const lowerCaseSearchData = searchData.toLowerCase();
+                  return lowerCaseColumnData.includes(lowerCaseSearchData);
+                }//cột dữ liệu có cột khác string
+                else if (typeof columnData === 'boolean' || typeof columnData === 'number') {
+                  const stringColumnData = String(columnData);
+                  const lowerCaseColumnData = stringColumnData.toLowerCase();
+                  const lowerCaseSearchData = searchData.toLowerCase();
+                  return lowerCaseColumnData.includes(lowerCaseSearchData);
+                } else if (columnData !== null) {
+                  return false;
+                }
+              }
 
 
 
-          });
+            });
 
-          // Lưu kết quả lọc vào biến result
-          result = filteredData;
-        }
+            // Lưu kết quả lọc vào biến result
+            result = filteredData;
+          }
         //sắp xếp 
+        function compareDate(date1, date2) {
+          const mDate1 = moment(date1, 'DD/MM/YYYY');
+          const mDate2 = moment(date2, 'DD/MM/YYYY');
+          if (mDate1.isBefore(mDate2)) {
+            return sortOrder === 'asc' ? -1 : 1;
+          }
+
+          if (mDate1.isAfter(mDate2)) {
+            return sortOrder === 'asc' ? 1 : -1;
+          }
+        }
         result.sort((a, b) => {
           if (sortBy === 'LoaiBaoHiem' || sortBy === 'NguoiMuaBaoHiem') {
             // Xử lý sắp xếp cột có tiếng Việt
@@ -695,7 +827,13 @@ router.get("/getInsurance", async function (req, res, next) {
             }
             const comparison = valA.localeCompare(valB, 'vi', { sensitivity: 'base' });
             return sortOrder === 'asc' ? comparison : -comparison;
-          } else {//cột không có tiếng Việt (chỉ có số và chữ tiếng Anh)
+          }
+          else if (sortBy === 'NgayMuaBaoHiem') {
+            return compareDate(a.NgayMuaBaoHiem, b.NgayMuaBaoHiem, sortOrder);
+          } if (sortBy === 'NgayHetHan') {
+            return compareDate(a.NgayHetHan, b.NgayHetHan, sortOrder);
+          }
+          else {//cột không có tiếng Việt (chỉ có số và chữ tiếng Anh)
             if (a[sortBy] === null && b[sortBy] === null) {
               return 0;
             }
@@ -786,7 +924,7 @@ router.post('/insertInsurance', newuploadBaoHiem.single('HinhAnh'), async functi
         const imagePathWithDomain = `http://${domain}/BaoHiem/${newPath}`;
         data = {
           ...data,
-          HinhAnh:imagePathWithDomain
+          HinhAnh: imagePathWithDomain
         }
       }
       sql.insertInsurance(data)
@@ -817,7 +955,7 @@ router.put('/updateInsurance', newuploadBaoHiem.single('HinhAnh'), async functio
         const imagePathWithDomain = `http://${domain}/BaoHiem/${newPath}`;
         data = {
           ...data,
-          HinhAnh:imagePathWithDomain
+          HinhAnh: imagePathWithDomain
         }
       }
       sql.updateInsurance(data)
@@ -865,6 +1003,7 @@ router.get("/getLocate", async function (req, res, next) {
   try {
     if (await sql.checkSessionAndRole(ss, 'getLocate')) {
       let result = await sql.getLocate();
+      const now = new Date();
       result.forEach(item => {
         const date = new Date(item.NgayMua);
         const date2 = new Date(item.NgayHetHan);
@@ -872,11 +1011,20 @@ router.get("/getLocate", async function (req, res, next) {
         const formattedDate = (`0${date.getDate()}`).slice(-2) + '/' +
           (`0${date.getMonth() + 1}`).slice(-2) + '/' +
           date.getFullYear();
-          const formattedDate2 = (`0${date2.getDate()}`).slice(-2) + '/' +
+        const formattedDate2 = (`0${date2.getDate()}`).slice(-2) + '/' +
           (`0${date2.getMonth() + 1}`).slice(-2) + '/' +
           date2.getFullYear();
         item.NgayMua = formattedDate;
         item.NgayHetHan = formattedDate2;
+        const dateNow = new Date(now).setHours(0, 0, 0, 0);
+        const dateEnd = new Date(date2).setHours(0, 0, 0, 0);
+        const diffMs = dateNow - dateEnd;
+        const diffDays = Math.abs(Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+        if ((diffDays <= 7 && date2 > now) || diffDays == 0) {
+          item.SapHetHan = true;
+        } else {
+          item.SapHetHan = false;
+        }
       });
       //kiểm tra chức năng lấy 1 vai trò
       if (typeof req.query.id !== 'undefined' && !isNaN(req.query.id && typeof req.query.id2 !== 'undefined' && !isNaN(req.query.id2))) {
@@ -889,64 +1037,93 @@ router.get("/getLocate", async function (req, res, next) {
         res.status(200).json(filteredData[0])
       }
       else {
-        // tính năng tìm kiếm
-        if (typeof req.query.search !== 'undefined' && typeof req.query.searchBy !== 'undefined') {
-          // Danh sách các cột có dữ liệu tiếng Việt
-          const vietnameseColumns = ['NguoiMuaDinhVi'];
-
-          // Lọc dữ liệu
-          const filteredData = result.filter((row) => {
-            const searchData = req.query.search;
-            const searchBy = req.query.searchBy;
-
-            // Lấy giá trị cột tìm kiếm
-            const columnData = row[searchBy];
-
-            //kiểm tra tìm kiếm chính xác
-            if (searchExact) {
-              // Kiểm tra xem cột có dữ liệu tiếng Việt hay không
-              const isVietnameseColumn = vietnameseColumns.includes(searchBy);
-
-              // Nếu cột là cột có dữ liệu tiếng Việt, sử dụng localeCompare để so sánh dữ liệu
-              if (isVietnameseColumn) {
-                if (typeof columnData === 'string') {
-                  return columnData.includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
-                } else if (columnData !== null) {
-                  return String(columnData).includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
-                }
-
-              } else {
-                // Nếu cột không có dữ liệu tiếng Việt, chỉ kiểm tra dữ liệu bình thường
-                if (typeof columnData === 'string') {
-                  return columnData.includes(searchData);
-                } else if (columnData !== null) {
-                  return String(columnData).includes(searchData);
-                }
-              }
-            } else {
-              if (typeof columnData === 'string') {
-                const lowerCaseColumnData = columnData.toLowerCase();
-                const lowerCaseSearchData = searchData.toLowerCase();
-                return lowerCaseColumnData.includes(lowerCaseSearchData);
-              }//cột dữ liệu có cột khác string
-              else if (typeof columnData === 'boolean' || typeof columnData === 'number') {
-                const stringColumnData = String(columnData);
-                const lowerCaseColumnData = stringColumnData.toLowerCase();
-                const lowerCaseSearchData = searchData.toLowerCase();
-                return lowerCaseColumnData.includes(lowerCaseSearchData);
-              } else if (columnData !== null) {
-                return false;
-              }
+        // tính năng lọc
+        if (req.query.searchBy === 'LanMoiNhat') {
+          // Lấy ra danh sách các Mã Xe duy nhất
+          const maXeList = [...new Set(result.map(item => item.MaXe))];
+          // Lọc ra item mới
+          const filteredResult = [];
+          maXeList.forEach(maXe => {
+            // Tìm item có Mã Xe là maXe và Lần Đăng Kiểm lớn nhất 
+            const maxItem = result
+              .filter(item => item.MaXe === maXe)
+              .sort((a, b) => b.LanMuaDinhVi - a.LanMuaDinhVi)[0];
+            // Nếu có thì đưa vào mảng kết quả  
+            if (maxItem) {
+              filteredResult.push(maxItem);
             }
+          })
+          result = filteredResult
+        } else
+          // tính năng tìm kiếm
+          if (typeof req.query.search !== 'undefined' && typeof req.query.searchBy !== 'undefined') {
+            // Danh sách các cột có dữ liệu tiếng Việt
+            const vietnameseColumns = ['NguoiMuaDinhVi'];
+
+            // Lọc dữ liệu
+            const filteredData = result.filter((row) => {
+              const searchData = req.query.search;
+              const searchBy = req.query.searchBy;
+
+              // Lấy giá trị cột tìm kiếm
+              const columnData = row[searchBy];
+
+              //kiểm tra tìm kiếm chính xác
+              if (searchExact) {
+                // Kiểm tra xem cột có dữ liệu tiếng Việt hay không
+                const isVietnameseColumn = vietnameseColumns.includes(searchBy);
+
+                // Nếu cột là cột có dữ liệu tiếng Việt, sử dụng localeCompare để so sánh dữ liệu
+                if (isVietnameseColumn) {
+                  if (typeof columnData === 'string') {
+                    return columnData.includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
+                  } else if (columnData !== null) {
+                    return String(columnData).includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
+                  }
+
+                } else {
+                  // Nếu cột không có dữ liệu tiếng Việt, chỉ kiểm tra dữ liệu bình thường
+                  if (typeof columnData === 'string') {
+                    return columnData.includes(searchData);
+                  } else if (columnData !== null) {
+                    return String(columnData).includes(searchData);
+                  }
+                }
+              } else {
+                if (typeof columnData === 'string') {
+                  const lowerCaseColumnData = columnData.toLowerCase();
+                  const lowerCaseSearchData = searchData.toLowerCase();
+                  return lowerCaseColumnData.includes(lowerCaseSearchData);
+                }//cột dữ liệu có cột khác string
+                else if (typeof columnData === 'boolean' || typeof columnData === 'number') {
+                  const stringColumnData = String(columnData);
+                  const lowerCaseColumnData = stringColumnData.toLowerCase();
+                  const lowerCaseSearchData = searchData.toLowerCase();
+                  return lowerCaseColumnData.includes(lowerCaseSearchData);
+                } else if (columnData !== null) {
+                  return false;
+                }
+              }
 
 
 
-          });
+            });
 
-          // Lưu kết quả lọc vào biến result
-          result = filteredData;
-        }
+            // Lưu kết quả lọc vào biến result
+            result = filteredData;
+          }
         //sắp xếp 
+        function compareDate(date1, date2) {
+          const mDate1 = moment(date1, 'DD/MM/YYYY');
+          const mDate2 = moment(date2, 'DD/MM/YYYY');
+          if (mDate1.isBefore(mDate2)) {
+            return sortOrder === 'asc' ? -1 : 1;
+          }
+
+          if (mDate1.isAfter(mDate2)) {
+            return sortOrder === 'asc' ? 1 : -1;
+          }
+        }
         result.sort((a, b) => {
           if (sortBy === 'NguoiMuaDinhVi') {
             // Xử lý sắp xếp cột có tiếng Việt
@@ -963,7 +1140,13 @@ router.get("/getLocate", async function (req, res, next) {
             }
             const comparison = valA.localeCompare(valB, 'vi', { sensitivity: 'base' });
             return sortOrder === 'asc' ? comparison : -comparison;
-          } else {//cột không có tiếng Việt (chỉ có số và chữ tiếng Anh)
+          }
+          else if (sortBy === 'NgayMua') {
+            return compareDate(a.NgayMua, b.NgayMua, sortOrder);
+          } if (sortBy === 'NgayHetHan') {
+            return compareDate(a.NgayHetHan, b.NgayHetHan, sortOrder);
+          }
+          else {//cột không có tiếng Việt (chỉ có số và chữ tiếng Anh)
             if (a[sortBy] === null && b[sortBy] === null) {
               return 0;
             }
@@ -1054,7 +1237,7 @@ router.post('/insertLocate', newuploadDinhVi.single('HinhAnh'), async function (
         const imagePathWithDomain = `http://${domain}/DinhVi/${newPath}`;
         data = {
           ...data,
-          HinhAnh:imagePathWithDomain
+          HinhAnh: imagePathWithDomain
         }
       }
       sql.insertLocate(data)
@@ -1085,7 +1268,7 @@ router.put('/updateLocate', newuploadDinhVi.single('HinhAnh'), async function (r
         const imagePathWithDomain = `http://${domain}/DinhVi/${newPath}`;
         data = {
           ...data,
-          HinhAnh:imagePathWithDomain
+          HinhAnh: imagePathWithDomain
         }
       }
       sql.updateLocate(data)
