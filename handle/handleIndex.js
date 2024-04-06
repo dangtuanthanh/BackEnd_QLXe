@@ -21,7 +21,7 @@ async function insertMember(data) {
     } else {
       var hashedPassword
       var IDVaiTro = data.MaVaiTro
-      hashedPassword = typeof data.MatKhau === 'undefined' ? null : await bcrypt.hash(data.MatKhau, 10);
+      hashedPassword = (typeof data.MatKhau === 'undefined'  || data.MatKhau ===null) ? null : await bcrypt.hash(data.MatKhau, 10);
       const resultInsertMember = await pool.request()
         .input('TenThanhVien', sql.NVarChar, data.TenThanhVien)
         .input('DiaChi', sql.NVarChar, data.DiaChi)
@@ -237,6 +237,7 @@ async function register(data) {
       }
     });
     const randomCode = generateRandomCode()
+    console.log('randomCode',randomCode);
     let mailOptions = {
       from: 'dangtuanthanh265@gmail.com',
       to: `${data.Email}`,
@@ -298,14 +299,16 @@ async function registerCode(Code) {
       console.log("result.recordset[0]['TenThanhVien']", result.recordset[0]['TenThanhVien']);
       const Email = result.recordset[0]['Email']
       const MatKhau = await bcrypt.hash(result.recordset[0]['MatKhau'], 10)
-      await pool.request()
+      const resultInsertMember = await pool.request()
         .input('TenThanhVien', sql.NVarChar, TenThanhVien)
         .input('DiaChi', sql.NVarChar, null)
         .input('Email', sql.NVarChar, Email)
         .input('SoDienThoai', sql.VarChar, null)
         .input('MatKhau', sql.NVarChar, MatKhau)
-        .input('IDVaiTro', sql.NVarChar, '0')
+        .input('HinhAnh', sql.NVarChar, null)
         .execute('member_insertMember_insertMember');
+        const MaThanhVien = resultInsertMember.recordset[0][''];
+        await insertRolerMember(MaThanhVien, 0)
       return {
         success: true
       };
@@ -340,14 +343,12 @@ async function changeInfo(ss, data) {
   try {
     const MaDangNhap = { 'ss': ss }
     const resultSession = await session(MaDangNhap)
-    console.log('resultSession', resultSession);
     if (resultSession.success) {
-      console.log('resultSession.ThanhVien.MaThanhVien', resultSession.ThanhVien.MaThanhVien);
       await pool.request()
         .input('MaThanhVien', sql.Int, resultSession.ThanhVien.MaThanhVien)
         .input('TenThanhVien', sql.NVarChar, data.TenThanhVien)
-        .input('SoDienThoai', sql.VarChar, data.SoDienThoai)
-        .input('DiaChi', sql.NVarChar, data.DiaChi)
+        .input('SoDienThoai', sql.VarChar,  data.SoDienThoai ==='null'? null : data.SoDienThoai)
+        .input('DiaChi', sql.NVarChar, data.DiaChi ==='null'? null : data.DiaChi)
         .input('HinhAnh', sql.NVarChar, data.HinhAnh)
         .execute('loginAndPermission_changeInfo');
       return { success: true, message: 'Sửa thông tin thành công' }

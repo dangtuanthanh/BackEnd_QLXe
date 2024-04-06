@@ -11,7 +11,7 @@ var indexRouter = require('./routes/index');
 // var indexKhachHang = require('./routes/KhachHang');
 // var indexKho = require('./routes/Kho');
 var indexBangDieuKhien = require('./routes/BangDieuKhien');
- var indexHopDong = require('./routes/HopDong');
+var indexHopDong = require('./routes/HopDong');
 var indexDichVu = require('./routes/DichVu');
 var indexXe = require('./routes/Xe');
 var usersRouter = require('./routes/users');
@@ -39,17 +39,20 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'img')));//thiết lập cho phép truy cập file static
 
-app.use('/', indexRouter,indexXe,indexDichVu,indexHopDong,indexBangDieuKhien);
+app.use('/', indexRouter, indexXe, indexDichVu, indexHopDong, indexBangDieuKhien);
 //app.use('/', indexRouter,indexBanVaKhuVuc,indexCaLamViec,indexKhachHang,indexKho,indexThucDon,indexHoaDon,indexBep,indexBangDieuKhien);
 app.use('/users', usersRouter);
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
+app.use((req, res, next) => {
+  res.status(404);
+  res.send(`
+    <h1>Trang không tồn tại</h1>
+  `);
 });
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};

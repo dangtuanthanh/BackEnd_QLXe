@@ -59,30 +59,36 @@ router.get("/getContract", async function (req, res, next) {
     if (await sql.checkSessionAndRole(ss, 'getContract')) {
       let result = await sql.getContract();
       const now = new Date();
-        result.forEach(item => {
-          const date = new Date(item.NgayLamHopDong);
-          const date2 = new Date(item.NgayHetHanHopDong);
+      result.forEach(item => {
+        const date = new Date(item.NgayLamHopDong);
+        const date2 = new Date(item.NgayHetHanHopDong);
 
-          // Format date
-          const formattedDate = (`0${date.getDate()}`).slice(-2) + '/' +
-            (`0${date.getMonth() + 1}`).slice(-2) + '/' +
-            date.getFullYear();
-          const formattedDate2 = (`0${date2.getDate()}`).slice(-2) + '/' +
-            (`0${date2.getMonth() + 1}`).slice(-2) + '/' +
-            date2.getFullYear();
-          item.NgayLamHopDong = formattedDate;
-          item.NgayHetHanHopDong = formattedDate2;
-          const dateNow = new Date(now).setHours(0, 0, 0, 0);
-          const dateEnd = new Date(date2).setHours(0, 0, 0, 0);
-          const diffMs = dateNow - dateEnd;
-          const diffDays = Math.abs(Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-          if ((diffDays <= 7 && date2 > now) || diffDays == 0) {
-            item.SapHetHan = true;
-          } else {
-            item.SapHetHan = false;
-          }
-        });
-      
+        // Format date
+        const formattedDate = (`0${date.getDate()}`).slice(-2) + '/' +
+          (`0${date.getMonth() + 1}`).slice(-2) + '/' +
+          date.getFullYear();
+        const formattedDate2 = (`0${date2.getDate()}`).slice(-2) + '/' +
+          (`0${date2.getMonth() + 1}`).slice(-2) + '/' +
+          date2.getFullYear();
+        item.NgayLamHopDong = formattedDate;
+        item.NgayHetHanHopDong = formattedDate2;
+        const dateNow = new Date(now).setHours(0, 0, 0, 0);
+        const dateEnd = new Date(date2).setHours(0, 0, 0, 0);
+        const diffMs = dateNow - dateEnd;
+        const diffDays = Math.abs(Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+        if ((diffDays <= 7 && date2 > now) || diffDays == 0) {
+          item.SapHetHan = true;
+        } else {
+          item.SapHetHan = false;
+        }
+        const diffDaysNoAbs = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+        if (diffDaysNoAbs > 0) {
+          item.HetHan = true;
+        } else {
+          item.HetHan = false;
+        }
+      });
+
       //kiểm tra chức năng lấy 1 
       if (typeof req.query.id !== 'undefined' && !isNaN(req.query.id)) {
         const resultFilter = result.filter(item => item.MaHopDong == req.query.id);
@@ -112,74 +118,85 @@ router.get("/getContract", async function (req, res, next) {
         if (req.query.searchBy === 'HetHan') {
           // Lọc danh sách
           result = result.filter(item => {
-            const nowMoment = moment(now).startOf('day'); 
-            const dateMoment = moment(item.NgayHetHanHopDong, 'DD/MM/YYYY').startOf('day'); 
-            console.log('nowMoment',nowMoment);
-            console.log('dateMoment',dateMoment);
+            const nowMoment = moment(now).startOf('day');
+            const dateMoment = moment(item.NgayHetHanHopDong, 'DD/MM/YYYY').startOf('day');
             // So sánh với giờ hiện tại
             if (dateMoment.isBefore(nowMoment)) {
               return item;
             }
           });
-  
-        } else {
-        // tính năng tìm kiếm
-        if (typeof req.query.search !== 'undefined' && typeof req.query.searchBy !== 'undefined') {
-          // Danh sách các cột có dữ liệu tiếng Việt
-          const vietnameseColumns = ['TenThanhVien'];
 
-          // Lọc dữ liệu
-          const filteredData = result.filter((row) => {
-            const searchData = req.query.search;
-            const searchBy = req.query.searchBy;
-
-            // Lấy giá trị cột tìm kiếm
-            const columnData = row[searchBy];
-
-            //kiểm tra tìm kiếm chính xác
-            if (searchExact) {
-              // Kiểm tra xem cột có dữ liệu tiếng Việt hay không
-              const isVietnameseColumn = vietnameseColumns.includes(searchBy);
-
-              // Nếu cột là cột có dữ liệu tiếng Việt, sử dụng localeCompare để so sánh dữ liệu
-              if (isVietnameseColumn) {
-                if (typeof columnData === 'string') {
-                  return columnData.includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
-                } else if (columnData !== null) {
-                  return String(columnData).includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
-                }
-
-              } else {
-                // Nếu cột không có dữ liệu tiếng Việt, chỉ kiểm tra dữ liệu bình thường
-                if (typeof columnData === 'string') {
-                  return columnData.includes(searchData);
-                } else if (columnData !== null) {
-                  return String(columnData).includes(searchData);
-                }
-              }
-            } else {
-              if (typeof columnData === 'string') {
-                const lowerCaseColumnData = columnData.toLowerCase();
-                const lowerCaseSearchData = searchData.toLowerCase();
-                return lowerCaseColumnData.includes(lowerCaseSearchData);
-              }//cột dữ liệu có cột khác string
-              else if (typeof columnData === 'boolean' || typeof columnData === 'number') {
-                const stringColumnData = String(columnData);
-                const lowerCaseColumnData = stringColumnData.toLowerCase();
-                const lowerCaseSearchData = searchData.toLowerCase();
-                return lowerCaseColumnData.includes(lowerCaseSearchData);
-              } else if (columnData !== null) {
-                return false;
-              }
+        } else if (req.query.searchBy === 'SapHetHan') {
+          // Lọc danh sách
+          result = result.filter(item => {
+            const nowMoment = moment(now).startOf('day');
+            const endDateMoment = moment(item.NgayHetHanHopDong, 'DD/MM/YYYY').startOf('day');
+            // Tính 7 ngày từ hiện tại
+            const sevenDaysFromNowMoment = nowMoment.add(7, 'days');
+            if (endDateMoment.isBetween(moment(now), sevenDaysFromNowMoment) 
+            || moment(now).startOf('day').isSame(endDateMoment.startOf('day'), 'day')  ) {
+              return item;
             }
-
-
-
           });
+        } else {
+          // tính năng tìm kiếm
+          if (typeof req.query.search !== 'undefined' && typeof req.query.searchBy !== 'undefined') {
+            // Danh sách các cột có dữ liệu tiếng Việt
+            const vietnameseColumns = ['TenThanhVien'];
 
-          // Lưu kết quả lọc vào biến result
-          result = filteredData;
-        }}
+            // Lọc dữ liệu
+            const filteredData = result.filter((row) => {
+              const searchData = req.query.search;
+              const searchBy = req.query.searchBy;
+
+              // Lấy giá trị cột tìm kiếm
+              const columnData = row[searchBy];
+
+              //kiểm tra tìm kiếm chính xác
+              if (searchExact) {
+                // Kiểm tra xem cột có dữ liệu tiếng Việt hay không
+                const isVietnameseColumn = vietnameseColumns.includes(searchBy);
+
+                // Nếu cột là cột có dữ liệu tiếng Việt, sử dụng localeCompare để so sánh dữ liệu
+                if (isVietnameseColumn) {
+                  if (typeof columnData === 'string') {
+                    return columnData.includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
+                  } else if (columnData !== null) {
+                    return String(columnData).includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
+                  }
+
+                } else {
+                  // Nếu cột không có dữ liệu tiếng Việt, chỉ kiểm tra dữ liệu bình thường
+                  if (typeof columnData === 'string') {
+                    return columnData.includes(searchData);
+                  } else if (columnData !== null) {
+                    return String(columnData).includes(searchData);
+                  }
+                }
+              } else {
+                if (typeof columnData === 'string') {
+                  const lowerCaseColumnData = columnData.toLowerCase();
+                  const lowerCaseSearchData = searchData.toLowerCase();
+                  return lowerCaseColumnData.includes(lowerCaseSearchData);
+                }//cột dữ liệu có cột khác string
+                else if (typeof columnData === 'boolean' || typeof columnData === 'number') {
+                  const stringColumnData = String(columnData);
+                  const lowerCaseColumnData = stringColumnData.toLowerCase();
+                  const lowerCaseSearchData = searchData.toLowerCase();
+                  return lowerCaseColumnData.includes(lowerCaseSearchData);
+                } else if (columnData !== null) {
+                  return false;
+                }
+              }
+
+
+
+            });
+
+            // Lưu kết quả lọc vào biến result
+            result = filteredData;
+          }
+        }
         //sắp xếp 
         function compareDate(date1, date2) {
           const mDate1 = moment(date1, 'DD/MM/YYYY');
@@ -346,30 +363,30 @@ router.get("/getMyContract", async function (req, res, next) {
 
       let result = await sql.viewMyContract(ss);
       const now = new Date();
-        result.forEach(item => {
-          const date = new Date(item.NgayLamHopDong);
-          const date2 = new Date(item.NgayHetHanHopDong);
+      result.forEach(item => {
+        const date = new Date(item.NgayLamHopDong);
+        const date2 = new Date(item.NgayHetHanHopDong);
 
-          // Format date
-          const formattedDate = (`0${date.getDate()}`).slice(-2) + '/' +
-            (`0${date.getMonth() + 1}`).slice(-2) + '/' +
-            date.getFullYear();
-          const formattedDate2 = (`0${date2.getDate()}`).slice(-2) + '/' +
-            (`0${date2.getMonth() + 1}`).slice(-2) + '/' +
-            date2.getFullYear();
-          item.NgayLamHopDong = formattedDate;
-          item.NgayHetHanHopDong = formattedDate2;
-          const dateNow = new Date(now).setHours(0, 0, 0, 0);
-          const dateEnd = new Date(date2).setHours(0, 0, 0, 0);
-          const diffMs = dateNow - dateEnd;
-          const diffDays = Math.abs(Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-          if ((diffDays <= 7 && date2 > now) || diffDays == 0) {
-            item.SapHetHan = true;
-          } else {
-            item.SapHetHan = false;
-          }
-        });
-      
+        // Format date
+        const formattedDate = (`0${date.getDate()}`).slice(-2) + '/' +
+          (`0${date.getMonth() + 1}`).slice(-2) + '/' +
+          date.getFullYear();
+        const formattedDate2 = (`0${date2.getDate()}`).slice(-2) + '/' +
+          (`0${date2.getMonth() + 1}`).slice(-2) + '/' +
+          date2.getFullYear();
+        item.NgayLamHopDong = formattedDate;
+        item.NgayHetHanHopDong = formattedDate2;
+        const dateNow = new Date(now).setHours(0, 0, 0, 0);
+        const dateEnd = new Date(date2).setHours(0, 0, 0, 0);
+        const diffMs = dateNow - dateEnd;
+        const diffDays = Math.abs(Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+        if ((diffDays <= 7 && date2 > now) || diffDays == 0) {
+          item.SapHetHan = true;
+        } else {
+          item.SapHetHan = false;
+        }
+      });
+
       //kiểm tra chức năng lấy 1 
       if (typeof req.query.id !== 'undefined' && !isNaN(req.query.id)) {
         const resultFilter = result.filter(item => item.MaHopDong == req.query.id);
@@ -400,71 +417,72 @@ router.get("/getMyContract", async function (req, res, next) {
           // Lọc danh sách
           result = result.filter(item => {
             const nowMoment = moment(now);
-            const dateMoment = moment(item.NgayHetHanHopDong, 'DD/MM/YYYY'); 
+            const dateMoment = moment(item.NgayHetHanHopDong, 'DD/MM/YYYY');
             // So sánh với giờ hiện tại
             if (dateMoment.isBefore(nowMoment)) {
               return item;
             }
           });
-  
+
         } else {
-        // tính năng tìm kiếm
-        if (typeof req.query.search !== 'undefined' && typeof req.query.searchBy !== 'undefined') {
-          // Danh sách các cột có dữ liệu tiếng Việt
-          const vietnameseColumns = ['TenThanhVien'];
+          // tính năng tìm kiếm
+          if (typeof req.query.search !== 'undefined' && typeof req.query.searchBy !== 'undefined') {
+            // Danh sách các cột có dữ liệu tiếng Việt
+            const vietnameseColumns = ['TenThanhVien'];
 
-          // Lọc dữ liệu
-          const filteredData = result.filter((row) => {
-            const searchData = req.query.search;
-            const searchBy = req.query.searchBy;
+            // Lọc dữ liệu
+            const filteredData = result.filter((row) => {
+              const searchData = req.query.search;
+              const searchBy = req.query.searchBy;
 
-            // Lấy giá trị cột tìm kiếm
-            const columnData = row[searchBy];
+              // Lấy giá trị cột tìm kiếm
+              const columnData = row[searchBy];
 
-            //kiểm tra tìm kiếm chính xác
-            if (searchExact) {
-              // Kiểm tra xem cột có dữ liệu tiếng Việt hay không
-              const isVietnameseColumn = vietnameseColumns.includes(searchBy);
+              //kiểm tra tìm kiếm chính xác
+              if (searchExact) {
+                // Kiểm tra xem cột có dữ liệu tiếng Việt hay không
+                const isVietnameseColumn = vietnameseColumns.includes(searchBy);
 
-              // Nếu cột là cột có dữ liệu tiếng Việt, sử dụng localeCompare để so sánh dữ liệu
-              if (isVietnameseColumn) {
-                if (typeof columnData === 'string') {
-                  return columnData.includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
-                } else if (columnData !== null) {
-                  return String(columnData).includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
+                // Nếu cột là cột có dữ liệu tiếng Việt, sử dụng localeCompare để so sánh dữ liệu
+                if (isVietnameseColumn) {
+                  if (typeof columnData === 'string') {
+                    return columnData.includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
+                  } else if (columnData !== null) {
+                    return String(columnData).includes(searchData) || columnData.localeCompare(searchData, 'vi', { sensitivity: 'base' }) === 0;
+                  }
+
+                } else {
+                  // Nếu cột không có dữ liệu tiếng Việt, chỉ kiểm tra dữ liệu bình thường
+                  if (typeof columnData === 'string') {
+                    return columnData.includes(searchData);
+                  } else if (columnData !== null) {
+                    return String(columnData).includes(searchData);
+                  }
                 }
-
               } else {
-                // Nếu cột không có dữ liệu tiếng Việt, chỉ kiểm tra dữ liệu bình thường
                 if (typeof columnData === 'string') {
-                  return columnData.includes(searchData);
+                  const lowerCaseColumnData = columnData.toLowerCase();
+                  const lowerCaseSearchData = searchData.toLowerCase();
+                  return lowerCaseColumnData.includes(lowerCaseSearchData);
+                }//cột dữ liệu có cột khác string
+                else if (typeof columnData === 'boolean' || typeof columnData === 'number') {
+                  const stringColumnData = String(columnData);
+                  const lowerCaseColumnData = stringColumnData.toLowerCase();
+                  const lowerCaseSearchData = searchData.toLowerCase();
+                  return lowerCaseColumnData.includes(lowerCaseSearchData);
                 } else if (columnData !== null) {
-                  return String(columnData).includes(searchData);
+                  return false;
                 }
               }
-            } else {
-              if (typeof columnData === 'string') {
-                const lowerCaseColumnData = columnData.toLowerCase();
-                const lowerCaseSearchData = searchData.toLowerCase();
-                return lowerCaseColumnData.includes(lowerCaseSearchData);
-              }//cột dữ liệu có cột khác string
-              else if (typeof columnData === 'boolean' || typeof columnData === 'number') {
-                const stringColumnData = String(columnData);
-                const lowerCaseColumnData = stringColumnData.toLowerCase();
-                const lowerCaseSearchData = searchData.toLowerCase();
-                return lowerCaseColumnData.includes(lowerCaseSearchData);
-              } else if (columnData !== null) {
-                return false;
-              }
-            }
 
 
 
-          });
+            });
 
-          // Lưu kết quả lọc vào biến result
-          result = filteredData;
-        }}
+            // Lưu kết quả lọc vào biến result
+            result = filteredData;
+          }
+        }
         //sắp xếp 
         function compareDate(date1, date2) {
           const mDate1 = moment(date1, 'DD/MM/YYYY');

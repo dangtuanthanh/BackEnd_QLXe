@@ -101,6 +101,17 @@ async function getGroupTypeCar() {
     throw error;
   }
 }
+// lấy danh sách xe theo loại xe
+async function getCarByGroupTypeCar(MaNhomLoaiXe) {
+  try {
+    let result = await pool.request()
+    .input('MaNhomLoaiXe', sql.Int, MaNhomLoaiXe)
+    .execute('car_getGroupTypeCar_getCarByGroupTypeCar');
+    return result.recordset;
+  } catch (error) {
+    throw error;
+  }
+}
 //Hàm xoá nhóm loại xe
 async function deleteGroupTypeCar(ID) {
   try {
@@ -184,6 +195,17 @@ async function updateTypeCar(data) {
       .input('MoTa', sql.NVarChar, data.MoTa)
       .execute('car_updateTypeCar_updateTypeCar');
     return { success: true };
+  } catch (error) {
+    throw error;
+  }
+}
+// lấy danh sách xe theo loại xe
+async function getCarByTypeCar(MaLoaiXe) {
+  try {
+    let result = await pool.request()
+    .input('MaLoaiXe', sql.Int, MaLoaiXe)
+    .execute('car_getTypeCar_getCarByTypeCar');
+    return result.recordset;
   } catch (error) {
     throw error;
   }
@@ -486,10 +508,12 @@ module.exports = {
   insertStatusCar: insertStatusCar,
   deleteStatusCar: deleteStatusCar,
   getGroupTypeCar: getGroupTypeCar,
+  getCarByGroupTypeCar:getCarByGroupTypeCar,
   deleteGroupTypeCar: deleteGroupTypeCar,
   insertGroupTypeCar: insertGroupTypeCar,
   updateGroupTypeCar: updateGroupTypeCar,
   getTypeCar: getTypeCar,
+  getCarByTypeCar:getCarByTypeCar,
   deleteTypeCar: deleteTypeCar,
   insertTypeCar: insertTypeCar,
   updateTypeCar: updateTypeCar,

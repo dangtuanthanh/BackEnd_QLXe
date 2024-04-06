@@ -26,6 +26,8 @@ const sql = require("../handle/handleXe");//load file dboperation
 
 router.use(bodyParser.json());//cho phép xử lý dữ liệu gửi lên dạng json
 router.use(bodyParser.urlencoded({ extended: false }));//cho phép xử lý dữ liệu gửi lên dạng application/x-www-form-urlencoded
+
+
 router.get("/Xe", function (req, res, next) {
   res.render("index", { title: "Trang Quản Lý Xe" });
 });
@@ -281,7 +283,12 @@ router.get("/getGroupTypeCar", async function (req, res, next) {
       //kiểm tra chức năng lấy 1 vai trò
       if (typeof req.query.id !== 'undefined' && !isNaN(req.query.id)) {
         const filteredData = result.filter(item => item.MaNhomLoaiXe == req.query.id);
-        res.status(200).json(filteredData[0])
+        const resultListCar = await sql.getCarByGroupTypeCar(req.query.id);
+        const newFilteredData = {
+          ...filteredData[0],
+          DanhSachXe: resultListCar
+        };
+        res.status(200).json(newFilteredData)
       }
       else {
         // tính năng tìm kiếm
@@ -499,7 +506,12 @@ router.get("/getTypeCar", async function (req, res, next) {
       //kiểm tra chức năng lấy 1 
       if (typeof req.query.id !== 'undefined' && !isNaN(req.query.id)) {
         const filteredData = result.filter(item => item.MaLoaiXe == req.query.id);
-        res.status(200).json(filteredData[0])
+        const resultListCar = await sql.getCarByTypeCar(req.query.id);
+        const newFilteredData = {
+          ...filteredData[0],
+          DanhSachXe: resultListCar
+        };
+        res.status(200).json(newFilteredData)
       }
       else {
         // tính năng tìm kiếm
@@ -1372,6 +1384,12 @@ router.get("/getMaintenance", async function (req, res, next) {
         } else {
           item.SapHetHan = false;
         }
+        const diffDaysNoAbs = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+          if(diffDaysNoAbs > 0){
+            item.HetHan = true; 
+          }else {
+            item.HetHan = false;
+          }
       });
 
       //kiểm tra chức năng lấy 1 vai trò
@@ -1404,7 +1422,31 @@ router.get("/getMaintenance", async function (req, res, next) {
             }
           })
           result = filteredResult
-        } else
+        }
+        else if (req.query.searchBy === 'HetHan') {
+          // Lọc danh sách
+          result = result.filter(item => {
+            const nowMoment = moment(now).startOf('day');
+            const dateMoment = moment(item.NgayBaoDuongTiepTheo, 'DD/MM/YYYY').startOf('day');
+            // So sánh với giờ hiện tại
+            if (dateMoment.isBefore(nowMoment)) {
+              return item;
+            }
+          });
+        } else if (req.query.searchBy === 'SapHetHan') {
+          // Lọc danh sách
+          result = result.filter(item => {
+            const nowMoment = moment(now).startOf('day');
+            const endDateMoment = moment(item.NgayBaoDuongTiepTheo, 'DD/MM/YYYY').startOf('day');
+            // Tính 7 ngày từ hiện tại
+            const sevenDaysFromNowMoment = nowMoment.add(7, 'days');
+            if (endDateMoment.isBetween(moment(now), sevenDaysFromNowMoment) 
+            || moment(now).startOf('day').isSame(endDateMoment.startOf('day'), 'day')  ) {
+              return item;
+            }
+          });
+        }
+         else
           // tính năng tìm kiếm
           if (typeof req.query.search !== 'undefined' && typeof req.query.searchBy !== 'undefined') {
             // Danh sách các cột có dữ liệu tiếng Việt
