@@ -14,6 +14,7 @@ var indexBangDieuKhien = require('./routes/BangDieuKhien');
 var indexHopDong = require('./routes/HopDong');
 var indexDichVu = require('./routes/DichVu');
 var indexXe = require('./routes/Xe');
+var indexBangTin = require('./routes/BangTin');
 var usersRouter = require('./routes/users');
 
 var app = express();
@@ -38,8 +39,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'img')));//thiết lập cho phép truy cập file static
+app.use(express.static(path.join(__dirname, 'uploads')));
 
-app.use('/', indexRouter, indexXe, indexDichVu, indexHopDong, indexBangDieuKhien);
+app.use('/', indexRouter, indexXe, indexDichVu, indexHopDong, indexBangDieuKhien,indexBangTin);
 //app.use('/', indexRouter,indexBanVaKhuVuc,indexCaLamViec,indexKhachHang,indexKho,indexThucDon,indexHoaDon,indexBep,indexBangDieuKhien);
 app.use('/users', usersRouter);
 

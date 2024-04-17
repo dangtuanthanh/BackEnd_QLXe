@@ -752,7 +752,7 @@ router.get("/getCar", async function (req, res, next) {
         const handleLocate = formatDateResults(resuiltLocate)
         const handleMaintenance = formatDateResults(resuiltMaintenance)
         const handleUsageHistory = formatDateResults(resuiltUsageHistory)
-        const handleDetailContract = formatDateResults(resuiltDetailContract,true)
+        const handleDetailContract = formatDateResults(resuiltDetailContract, true)
         const newFilteredData = {
           ...filteredData[0],
           DangKiem: handleRegistry,
@@ -770,7 +770,7 @@ router.get("/getCar", async function (req, res, next) {
         // tính năng tìm kiếm
         if (typeof req.query.search !== 'undefined' && typeof req.query.searchBy !== 'undefined') {
           // Danh sách các cột có dữ liệu tiếng Việt
-          const vietnameseColumns = ['NhanHieu', 'TrongTai', 'Mau', 'LinhKien', 'MoTaTinhTrangXe'];
+          const vietnameseColumns = ['NhanHieu', 'TrongTai', 'Mau', 'LinhKien', 'MoTaTinhTrangXe', 'TenLoaiXe', 'TenNhomLoaiXe'];
 
           // Lọc dữ liệu
           const filteredData = result.filter((row) => {
@@ -824,8 +824,20 @@ router.get("/getCar", async function (req, res, next) {
           result = filteredData;
         }
         //sắp xếp 
+        //cột có ngày tháng 
+        function compareDate(date1, date2) {
+          const mDate1 = moment(date1, 'DD/MM/YYYY');
+          const mDate2 = moment(date2, 'DD/MM/YYYY');
+          if (mDate1.isBefore(mDate2)) {
+            return sortOrder === 'asc' ? -1 : 1;
+          }
+
+          if (mDate1.isAfter(mDate2)) {
+            return sortOrder === 'asc' ? 1 : -1;
+          }
+        }
         result.sort((a, b) => {
-          if (sortBy === 'NhanHieu' || sortBy === 'TrongTai' || sortBy === 'Mau' || sortBy === 'LinhKien' || sortBy === 'MoTaTinhTrangXe') {
+          if (sortBy === 'NhanHieu' || sortBy === 'TrongTai' || sortBy === 'Mau' || sortBy === 'LinhKien' || sortBy === 'MoTaTinhTrangXe' || sortBy === 'TenLoaiXe' || sortBy === 'TenNhomLoaiXe') {
             // Xử lý sắp xếp cột có tiếng Việt
             const valA = a[sortBy] || ''; // Giá trị của a[sortBy] hoặc chuỗi rỗng nếu null
             const valB = b[sortBy] || ''; // Giá trị của b[sortBy] hoặc chuỗi rỗng nếu null
@@ -840,7 +852,11 @@ router.get("/getCar", async function (req, res, next) {
             }
             const comparison = valA.localeCompare(valB, 'vi', { sensitivity: 'base' });
             return sortOrder === 'asc' ? comparison : -comparison;
-          } else {//cột không có tiếng Việt (chỉ có số và chữ tiếng Anh)
+          }
+          else if (sortBy === 'NgayMua') {
+            return compareDate(a.NgayMua, b.NgayMua, sortOrder);
+          }
+          else {//cột không có tiếng Việt (chỉ có số và chữ tiếng Anh)
             if (a[sortBy] === null && b[sortBy] === null) {
               return 0;
             }
@@ -891,7 +907,7 @@ function formatDateResults(results, isHopDong = false) {
     const formattedDate = formatDate(date);
     const formattedDate2 = formatDate(date2);
     if (isHopDong) {
-      item.SoHopDong=item.SoHopDong
+      item.SoHopDong = item.SoHopDong
       item.Lan = item.Lan;
       item.Ngay = formattedDate;
       item.NgayHetHan = formattedDate2;
@@ -1385,11 +1401,16 @@ router.get("/getMaintenance", async function (req, res, next) {
           item.SapHetHan = false;
         }
         const diffDaysNoAbs = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
-          if(diffDaysNoAbs > 0){
-            item.HetHan = true; 
-          }else {
-            item.HetHan = false;
-          }
+        if (diffDaysNoAbs > 0) {
+          item.HetHan = true;
+        } else {
+          item.HetHan = false;
+        }
+        if (dateEnd >= dateNow) {
+          item.ConHan = true;
+        } else {
+          item.ConHan = false;
+        }
       });
 
       //kiểm tra chức năng lấy 1 vai trò
@@ -1422,6 +1443,17 @@ router.get("/getMaintenance", async function (req, res, next) {
             }
           })
           result = filteredResult
+        } else if (req.query.searchBy === 'ConHan') {
+          // Lọc danh sách còn hạn
+          result = result.filter(item => {
+            const nowMoment = moment(now).startOf('day');
+            const dateMoment = moment(item.NgayBaoDuongTiepTheo, 'DD/MM/YYYY').startOf('day');
+            // So sánh với giờ hiện tại
+            if (dateMoment.isAfter(nowMoment) || dateMoment.isSame(nowMoment)) {
+              return item;
+            }
+
+          });
         }
         else if (req.query.searchBy === 'HetHan') {
           // Lọc danh sách
@@ -1440,13 +1472,13 @@ router.get("/getMaintenance", async function (req, res, next) {
             const endDateMoment = moment(item.NgayBaoDuongTiepTheo, 'DD/MM/YYYY').startOf('day');
             // Tính 7 ngày từ hiện tại
             const sevenDaysFromNowMoment = nowMoment.add(7, 'days');
-            if (endDateMoment.isBetween(moment(now), sevenDaysFromNowMoment) 
-            || moment(now).startOf('day').isSame(endDateMoment.startOf('day'), 'day')  ) {
+            if (endDateMoment.isBetween(moment(now), sevenDaysFromNowMoment)
+              || moment(now).startOf('day').isSame(endDateMoment.startOf('day'), 'day')) {
               return item;
             }
           });
         }
-         else
+        else
           // tính năng tìm kiếm
           if (typeof req.query.search !== 'undefined' && typeof req.query.searchBy !== 'undefined') {
             // Danh sách các cột có dữ liệu tiếng Việt

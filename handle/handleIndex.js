@@ -343,13 +343,15 @@ async function changeInfo(ss, data) {
   try {
     const MaDangNhap = { 'ss': ss }
     const resultSession = await session(MaDangNhap)
+    console.log('data.HinhAnh',data.HinhAnh);
+    console.log('typeof data.HinhAnh',typeof data.HinhAnh);
     if (resultSession.success) {
       await pool.request()
         .input('MaThanhVien', sql.Int, resultSession.ThanhVien.MaThanhVien)
         .input('TenThanhVien', sql.NVarChar, data.TenThanhVien)
         .input('SoDienThoai', sql.VarChar,  data.SoDienThoai ==='null'? null : data.SoDienThoai)
         .input('DiaChi', sql.NVarChar, data.DiaChi ==='null'? null : data.DiaChi)
-        .input('HinhAnh', sql.NVarChar, data.HinhAnh)
+        .input('HinhAnh', sql.NVarChar, data.HinhAnh ==='undefined'? null :data.HinhAnh)
         .execute('loginAndPermission_changeInfo');
       return { success: true, message: 'Sửa thông tin thành công' }
     } else return { success: false }

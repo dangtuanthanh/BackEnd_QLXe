@@ -87,6 +87,11 @@ router.get("/getRegistry", async function (req, res, next) {
         } else {
           item.HetHan = false;
         }
+        if (dateEnd >= dateNow) {
+          item.ConHan = true;
+        } else {
+          item.ConHan = false;
+        }
       });
 
       //kiểm tra chức năng lấy 1 vai trò
@@ -128,6 +133,17 @@ router.get("/getRegistry", async function (req, res, next) {
               return item;
             }
           });
+        } else if (req.query.searchBy === 'ConHan') {
+          // Lọc danh sách còn hạn
+          result = result.filter(item => {
+            const nowMoment = moment(now).startOf('day');
+            const dateMoment = moment(item.NgayHetHan, 'DD/MM/YYYY').startOf('day');
+            // So sánh với giờ hiện tại
+            if (dateMoment.isAfter(nowMoment) || dateMoment.isSame(nowMoment)) {
+              return item;
+            }
+
+          });
         } else if (req.query.searchBy === 'SapHetHan') {
           // Lọc danh sách
           result = result.filter(item => {
@@ -135,8 +151,8 @@ router.get("/getRegistry", async function (req, res, next) {
             const endDateMoment = moment(item.NgayHetHan, 'DD/MM/YYYY').startOf('day');
             // Tính 7 ngày từ hiện tại
             const sevenDaysFromNowMoment = nowMoment.add(7, 'days');
-            if (endDateMoment.isBetween(moment(now), sevenDaysFromNowMoment) 
-            || moment(now).startOf('day').isSame(endDateMoment.startOf('day'), 'day')  ) {
+            if (endDateMoment.isBetween(moment(now), sevenDaysFromNowMoment)
+              || moment(now).startOf('day').isSame(endDateMoment.startOf('day'), 'day')) {
               return item;
             }
           });
@@ -431,6 +447,11 @@ router.get("/getEmblem", async function (req, res, next) {
         } else {
           item.HetHan = false;
         }
+        if (dateEnd >= dateNow) {
+          item.ConHan = true;
+        } else {
+          item.ConHan = false;
+        }
       });
       //kiểm tra chức năng lấy 1 vai trò
       if (typeof req.query.id !== 'undefined' && !isNaN(req.query.id && typeof req.query.id2 !== 'undefined' && !isNaN(req.query.id2))) {
@@ -461,6 +482,17 @@ router.get("/getEmblem", async function (req, res, next) {
             }
           })
           result = filteredResult
+        }else if (req.query.searchBy === 'ConHan') {
+          // Lọc danh sách còn hạn
+          result = result.filter(item => {
+            const nowMoment = moment(now).startOf('day');
+            const dateMoment = moment(item.NgayHetHan, 'DD/MM/YYYY').startOf('day');
+            // So sánh với giờ hiện tại
+            if (dateMoment.isAfter(nowMoment) || dateMoment.isSame(nowMoment)) {
+              return item;
+            }
+
+          });
         }
         else if (req.query.searchBy === 'HetHan') {
           // Lọc danh sách
@@ -479,8 +511,8 @@ router.get("/getEmblem", async function (req, res, next) {
             const endDateMoment = moment(item.NgayHetHan, 'DD/MM/YYYY').startOf('day');
             // Tính 7 ngày từ hiện tại
             const sevenDaysFromNowMoment = nowMoment.add(7, 'days');
-            if (endDateMoment.isBetween(moment(now), sevenDaysFromNowMoment) 
-            || moment(now).startOf('day').isSame(endDateMoment.startOf('day'), 'day')  ) {
+            if (endDateMoment.isBetween(moment(now), sevenDaysFromNowMoment)
+              || moment(now).startOf('day').isSame(endDateMoment.startOf('day'), 'day')) {
               return item;
             }
           });
@@ -775,6 +807,11 @@ router.get("/getInsurance", async function (req, res, next) {
         } else {
           item.HetHan = false;
         }
+        if (dateEnd >= dateNow) {
+          item.ConHan = true;
+        } else {
+          item.ConHan = false;
+        }
       });
       //kiểm tra chức năng lấy 1 vai trò
       if (typeof req.query.id !== 'undefined' && !isNaN(req.query.id && typeof req.query.id2 !== 'undefined' && !isNaN(req.query.id2))) {
@@ -822,10 +859,21 @@ router.get("/getInsurance", async function (req, res, next) {
             const endDateMoment = moment(item.NgayHetHan, 'DD/MM/YYYY').startOf('day');
             // Tính 7 ngày từ hiện tại
             const sevenDaysFromNowMoment = nowMoment.add(7, 'days');
-            if (endDateMoment.isBetween(moment(now), sevenDaysFromNowMoment) 
-            || moment(now).startOf('day').isSame(endDateMoment.startOf('day'), 'day')  ) {
+            if (endDateMoment.isBetween(moment(now), sevenDaysFromNowMoment)
+              || moment(now).startOf('day').isSame(endDateMoment.startOf('day'), 'day')) {
               return item;
             }
+          });
+        }else if (req.query.searchBy === 'ConHan') {
+          // Lọc danh sách còn hạn
+          result = result.filter(item => {
+            const nowMoment = moment(now).startOf('day');
+            const dateMoment = moment(item.NgayHetHan, 'DD/MM/YYYY').startOf('day');
+            // So sánh với giờ hiện tại
+            if (dateMoment.isAfter(nowMoment) || dateMoment.isSame(nowMoment)) {
+              return item;
+            }
+
           });
         }
         else
@@ -1118,6 +1166,11 @@ router.get("/getLocate", async function (req, res, next) {
         } else {
           item.HetHan = false;
         }
+        if (dateEnd >= dateNow) {
+          item.ConHan = true;
+        } else {
+          item.ConHan = false;
+        }
       });
       //kiểm tra chức năng lấy 1 vai trò
       if (typeof req.query.id !== 'undefined' && !isNaN(req.query.id && typeof req.query.id2 !== 'undefined' && !isNaN(req.query.id2))) {
@@ -1147,7 +1200,7 @@ router.get("/getLocate", async function (req, res, next) {
             }
           })
           result = filteredResult
-        } 
+        }
         else if (req.query.searchBy === 'HetHan') {
           // Lọc danh sách
           result = result.filter(item => {
@@ -1165,10 +1218,21 @@ router.get("/getLocate", async function (req, res, next) {
             const endDateMoment = moment(item.NgayHetHan, 'DD/MM/YYYY').startOf('day');
             // Tính 7 ngày từ hiện tại
             const sevenDaysFromNowMoment = nowMoment.add(7, 'days');
-            if (endDateMoment.isBetween(moment(now), sevenDaysFromNowMoment) 
-            || moment(now).startOf('day').isSame(endDateMoment.startOf('day'), 'day')  ) {
+            if (endDateMoment.isBetween(moment(now), sevenDaysFromNowMoment)
+              || moment(now).startOf('day').isSame(endDateMoment.startOf('day'), 'day')) {
               return item;
             }
+          });
+        }else if (req.query.searchBy === 'ConHan') {
+          // Lọc danh sách còn hạn
+          result = result.filter(item => {
+            const nowMoment = moment(now).startOf('day');
+            const dateMoment = moment(item.NgayHetHan, 'DD/MM/YYYY').startOf('day');
+            // So sánh với giờ hiện tại
+            if (dateMoment.isAfter(nowMoment) || dateMoment.isSame(nowMoment)) {
+              return item;
+            }
+
           });
         }
         else

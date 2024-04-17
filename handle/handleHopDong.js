@@ -86,7 +86,7 @@ async function insertContract(data) {
     const TongTien = data.DanhSach.reduce((sum, item) => {
       return sum + Number(item.DonGia);
     }, 0)
-    console.log('TongTien',TongTien);
+    console.log('TongTien', TongTien);
     const result = await pool.request()
       .input('NgayLamHopDong', sql.Date, data.NgayLamHopDong)
       .input('ThoiGian', sql.Int, data.ThoiGian)
@@ -241,6 +241,108 @@ async function viewMyContract(ss) {
     throw error;
   }
 }
+
+// lấy danh sách xe theo mã hợp đồng
+async function viewMyCar(MaHopDong) {
+  try {
+    let result = await pool.request()
+      .input('MaHopDong', sql.Int, MaHopDong)
+      .execute('contract_viewMyCar_viewMyCar');
+    return result.recordset;
+  } catch (error) {
+    throw error;
+  }
+}
+async function getServiceByIDCar(MaXe, TenBang, Cot1, Cot2, Cot3) {
+  try {
+    let result = await pool.request()
+      .input('MaXe', sql.Int, MaXe)
+      .input('TenBang', sql.VarChar, TenBang)
+      .input('Cot1', sql.VarChar, Cot1)
+      .input('Cot2', sql.VarChar, Cot2)
+      .input('Cot3', sql.VarChar, Cot3)
+      .execute('global_getServicebyIDCar_getServiceByIDCar');
+    return result.recordset;
+  } catch (error) {
+    throw error;
+  }
+}
+async function getDetailContractByIDCar(MaXe) {
+  try {
+    let result = await pool.request()
+      .input('MaXe', sql.Int, MaXe)
+      .execute('car_getCar_getDetailContractByIDCar');
+    return result.recordset;
+  } catch (error) {
+    throw error;
+  }
+}
+async function viewMyRegistry(MaXe,Lan) {
+  try {
+    let result = await pool.request()
+      .input('MaXe', sql.Int, MaXe)
+      .input('Lan', sql.Int, Lan)
+      .execute('contract_viewMyRegistry_viewMyRegistry');
+    return result.recordset;
+  } catch (error) {
+    throw error;
+  }
+}
+async function viewMyInsurance(MaXe,Lan) {
+  try {
+    let result = await pool.request()
+      .input('MaXe', sql.Int, MaXe)
+      .input('Lan', sql.Int, Lan)
+      .execute('contract_viewMyInsurance_viewMyInsurance');
+    return result.recordset;
+  } catch (error) {
+    throw error;
+  }
+}
+async function viewMyEmblem(MaXe,Lan) {
+  try {
+    let result = await pool.request()
+      .input('MaXe', sql.Int, MaXe)
+      .input('Lan', sql.Int, Lan)
+      .execute('contract_viewMyEmblem_viewMyEmblem');
+    return result.recordset;
+  } catch (error) {
+    throw error;
+  }
+}
+async function viewMyLocate(MaXe,Lan) {
+  try {
+    let result = await pool.request()
+      .input('MaXe', sql.Int, MaXe)
+      .input('Lan', sql.Int, Lan)
+      .execute('contract_viewMyLocate_viewMyLocate');
+    return result.recordset;
+  } catch (error) {
+    throw error;
+  }
+}
+async function viewMyMaintenance(MaXe,Lan) {
+  try {
+    let result = await pool.request()
+      .input('MaXe', sql.Int, MaXe)
+      .input('Lan', sql.Int, Lan)
+      .execute('contract_viewMyMaintenance_viewMyMaintenance');
+    return result.recordset;
+  } catch (error) {
+    throw error;
+  }
+}
+async function viewMyUsageHistory(MaXe,Lan) {
+  try {
+    let result = await pool.request()
+      .input('MaXe', sql.Int, MaXe)
+      .input('Lan', sql.Int, Lan)
+      .execute('contract_viewMyUsageHistory_viewMyUsageHistory');
+    return result.recordset;
+  } catch (error) {
+    throw error;
+  }
+}
 module.exports = {
   checkSessionAndRole: checkSessionAndRole,
   getContract: getContract,
@@ -248,5 +350,14 @@ module.exports = {
   deleteContract: deleteContract,
   insertContract: insertContract,
   updateContract: updateContract,
-  viewMyContract:viewMyContract
+  viewMyContract: viewMyContract,
+  viewMyCar: viewMyCar,
+  getServiceByIDCar:getServiceByIDCar,
+  getDetailContractByIDCar:getDetailContractByIDCar,
+  viewMyRegistry:viewMyRegistry,
+  viewMyInsurance:viewMyInsurance,
+  viewMyEmblem:viewMyEmblem,
+  viewMyLocate:viewMyLocate,
+  viewMyMaintenance:viewMyMaintenance,
+  viewMyUsageHistory:viewMyUsageHistory
 };

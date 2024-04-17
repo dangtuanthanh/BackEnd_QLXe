@@ -72,13 +72,13 @@ async function deleteRegistry(ID, ID2) {
 //xử lý thêm đăng kiểm
 async function insertRegistry(data) {
   try {
-    if (data.TinhTrangApDung =='true') {
-      //nếu có áp dụng cái mới thì tắt áp dụng các cái cũ
-      await pool.request()
-        .input('tableName', sql.NVarChar, 'ChiTietDangKiem')
-        .input('MaXe', sql.Int, data.MaXe)
-        .execute('global_getOffService_getOffService');
-    }
+    // if (data.TinhTrangApDung =='true') {
+    //   //nếu có áp dụng cái mới thì tắt áp dụng các cái cũ
+    //   await pool.request()
+    //     .input('tableName', sql.NVarChar, 'ChiTietDangKiem')
+    //     .input('MaXe', sql.Int, data.MaXe)
+    //     .execute('global_getOffService_getOffService');
+    // }
     // lấy lần gần đây nhất
     const layLanGanDay = await pool.request()
       .input('tableName', sql.NVarChar, 'ChiTietDangKiem')
@@ -97,7 +97,7 @@ async function insertRegistry(data) {
       .input('ThoiGian', sql.Int, data.ThoiGian)
       .input('NoiDangKiem', sql.NVarChar, data.NoiDangKiem)
       .input('NguoiDiDangKiem', sql.NVarChar, data.NguoiDiDangKiem)
-      .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung=='true' ? true : (LanMoi == 1 ? true : false))
+      // .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung=='true' ? true : (LanMoi == 1 ? true : false))
       .execute('service_insertRegistry_insertRegistry');
     return { success: true };
   } catch (error) {
@@ -108,23 +108,23 @@ async function insertRegistry(data) {
 //xử lý cập nhật đăng kiểm
 async function updateRegistry(data) {
   try {
-    if (data.TinhTrangApDung =='true') {
-      //nếu có áp dụng cái mới thì tắt áp dụng các cái cũ
-      await pool.request()
-        .input('tableName', sql.NVarChar, 'ChiTietDangKiem')
-        .input('MaXe', sql.Int, data.MaXe)
-        .execute('global_getOffService_getOffService');
-    }
+    // if (data.TinhTrangApDung =='true') {
+    //   //nếu có áp dụng cái mới thì tắt áp dụng các cái cũ
+    //   await pool.request()
+    //     .input('tableName', sql.NVarChar, 'ChiTietDangKiem')
+    //     .input('MaXe', sql.Int, data.MaXe)
+    //     .execute('global_getOffService_getOffService');
+    // }
     //cập nhật dữ liệu mới vào SQL
     await pool.request()
-      .input('HinhAnh', sql.NVarChar, data.HinhAnh)
+      .input('HinhAnh', sql.NVarChar, data.HinhAnh === 'null' ? null : data.HinhAnh)
       .input('MaXe', sql.Int, data.MaXe)
       .input('LanDangKiem', sql.Int, data.LanDangKiem)
-      .input('NgayDangKiem', sql.Date, data.NgayDangKiem ==='null'? null : data.NgayDangKiem)
-      .input('ThoiGian', sql.Int, data.ThoiGian ==='null'? null : data.ThoiGian)
-      .input('NoiDangKiem', sql.NVarChar, data.NoiDangKiem ==='null'? null : data.NoiDangKiem)
-      .input('NguoiDiDangKiem', sql.NVarChar, data.NguoiDiDangKiem ==='null'? null : data.NguoiDiDangKiem)
-      .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung=='true' ? true : false)
+      .input('NgayDangKiem', sql.Date, data.NgayDangKiem === 'null' ? null : data.NgayDangKiem)
+      .input('ThoiGian', sql.Int, data.ThoiGian === 'null' ? null : data.ThoiGian)
+      .input('NoiDangKiem', sql.NVarChar, data.NoiDangKiem === 'null' ? null : data.NoiDangKiem)
+      .input('NguoiDiDangKiem', sql.NVarChar, data.NguoiDiDangKiem === 'null' ? null : data.NguoiDiDangKiem)
+      // .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung=='true' ? true : false)
       .execute('service_updateRegistry_updateRegistry');
     return { success: true };
   } catch (error) {
@@ -159,13 +159,13 @@ async function deleteEmblem(ID, ID2) {
 //xử lý thêm phù hiệu
 async function insertEmblem(data) {
   try {
-    if (data.TinhTrangApDung =='true') {
-      //nếu có áp dụng cái mới thì tắt áp dụng các cái cũ
-      await pool.request()
-        .input('tableName', sql.NVarChar, 'ChiTietPhuHieu')
-        .input('MaXe', sql.Int, data.MaXe)
-        .execute('global_getOffService_getOffService');
-    }
+    // if (data.TinhTrangApDung =='true') {
+    //   //nếu có áp dụng cái mới thì tắt áp dụng các cái cũ
+    //   await pool.request()
+    //     .input('tableName', sql.NVarChar, 'ChiTietPhuHieu')
+    //     .input('MaXe', sql.Int, data.MaXe)
+    //     .execute('global_getOffService_getOffService');
+    // }
     // lấy lần gần đây nhất
     const layLanGanDay = await pool.request()
       .input('tableName', sql.NVarChar, 'ChiTietPhuHieu')
@@ -184,7 +184,7 @@ async function insertEmblem(data) {
       .input('ThoiGian', sql.Int, data.ThoiGian)
       .input('NoiCapPhuHieu', sql.NVarChar, data.NoiCapPhuHieu)
       .input('NguoiDiCapPhuHieu', sql.NVarChar, data.NguoiDiCapPhuHieu)
-      .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung=='true' ? true : (LanMoi == 1 ? true : false))
+      //.input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung=='true' ? true : (LanMoi == 1 ? true : false))
       .execute('service_insertEmblem_insertEmblem');
     return { success: true };
   } catch (error) {
@@ -195,23 +195,23 @@ async function insertEmblem(data) {
 //xử lý cập nhật phù hiệu
 async function updateEmblem(data) {
   try {
-    if (data.TinhTrangApDung =='true') {
-      //nếu có áp dụng cái mới thì tắt áp dụng các cái cũ
-      await pool.request()
-        .input('tableName', sql.NVarChar, 'ChiTietPhuHieu')
-        .input('MaXe', sql.Int, data.MaXe)
-        .execute('global_getOffService_getOffService');
-    }
+    // if (data.TinhTrangApDung =='true') {
+    //   //nếu có áp dụng cái mới thì tắt áp dụng các cái cũ
+    //   await pool.request()
+    //     .input('tableName', sql.NVarChar, 'ChiTietPhuHieu')
+    //     .input('MaXe', sql.Int, data.MaXe)
+    //     .execute('global_getOffService_getOffService');
+    // }
     //cập nhật dữ liệu mới vào SQL
     await pool.request()
-    .input('HinhAnh', sql.NVarChar, data.HinhAnh)
-    .input('MaXe', sql.Int, data.MaXe)
-    .input('LanPhuHieu', sql.Int, data.LanPhuHieu)
-    .input('NgayCapPhuHieu', sql.Date, data.NgayCapPhuHieu ==='null'? null : data.NgayCapPhuHieu)
-    .input('ThoiGian', sql.Int, data.ThoiGian ==='null'? null : data.ThoiGian)
-    .input('NoiCapPhuHieu', sql.NVarChar, data.NoiCapPhuHieu ==='null'? null : data.NoiCapPhuHieu)
-    .input('NguoiDiCapPhuHieu', sql.NVarChar, data.NguoiDiCapPhuHieu ==='null'? null : data.NguoiDiCapPhuHieu)
-      .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung=='true' ? true : false)
+      .input('HinhAnh', sql.NVarChar, data.HinhAnh === 'null' ? null : data.HinhAnh)
+      .input('MaXe', sql.Int, data.MaXe)
+      .input('LanPhuHieu', sql.Int, data.LanPhuHieu)
+      .input('NgayCapPhuHieu', sql.Date, data.NgayCapPhuHieu === 'null' ? null : data.NgayCapPhuHieu)
+      .input('ThoiGian', sql.Int, data.ThoiGian === 'null' ? null : data.ThoiGian)
+      .input('NoiCapPhuHieu', sql.NVarChar, data.NoiCapPhuHieu === 'null' ? null : data.NoiCapPhuHieu)
+      .input('NguoiDiCapPhuHieu', sql.NVarChar, data.NguoiDiCapPhuHieu === 'null' ? null : data.NguoiDiCapPhuHieu)
+      // .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung == 'true' ? true : false)
       .execute('service_updateEmblem_updateEmblem');
     return { success: true };
   } catch (error) {
@@ -247,13 +247,13 @@ async function deleteInsurance(ID, ID2) {
 //xử lý thêm bảo hiểm
 async function insertInsurance(data) {
   try {
-    if (data.TinhTrangApDung =='true') {
-      //nếu có áp dụng cái mới thì tắt áp dụng các cái cũ
-      await pool.request()
-        .input('tableName', sql.NVarChar, 'ChiTietMuaBaoHiem')
-        .input('MaXe', sql.Int, data.MaXe)
-        .execute('global_getOffService_getOffService');
-    }
+    // if (data.TinhTrangApDung == 'true') {
+    //   //nếu có áp dụng cái mới thì tắt áp dụng các cái cũ
+    //   await pool.request()
+    //     .input('tableName', sql.NVarChar, 'ChiTietMuaBaoHiem')
+    //     .input('MaXe', sql.Int, data.MaXe)
+    //     .execute('global_getOffService_getOffService');
+    // }
     // lấy lần gần đây nhất
     const layLanGanDay = await pool.request()
       .input('tableName', sql.NVarChar, 'ChiTietMuaBaoHiem')
@@ -272,7 +272,7 @@ async function insertInsurance(data) {
       .input('ThoiGian', sql.Int, data.ThoiGian)
       .input('LoaiBaoHiem', sql.NVarChar, data.LoaiBaoHiem)
       .input('NguoiMuaBaoHiem', sql.NVarChar, data.NguoiMuaBaoHiem)
-      .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung=='true' ? true : (LanMoi == 1 ? true : false))
+      // .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung == 'true' ? true : (LanMoi == 1 ? true : false))
       .execute('service_insertInsurance_insertInsurance');
     return { success: true };
   } catch (error) {
@@ -283,24 +283,24 @@ async function insertInsurance(data) {
 //xử lý cập nhật bảo hiểm
 async function updateInsurance(data) {
   try {
-    if (data.TinhTrangApDung =='true') {
-      //nếu có áp dụng cái mới thì tắt áp dụng các cái cũ
-      await pool.request()
-        .input('tableName', sql.NVarChar, 'ChiTietMuaBaoHiem')
-        .input('MaXe', sql.Int, data.MaXe)
-        .execute('global_getOffService_getOffService');
-    }
+    // if (data.TinhTrangApDung == 'true') {
+    //   //nếu có áp dụng cái mới thì tắt áp dụng các cái cũ
+    //   await pool.request()
+    //     .input('tableName', sql.NVarChar, 'ChiTietMuaBaoHiem')
+    //     .input('MaXe', sql.Int, data.MaXe)
+    //     .execute('global_getOffService_getOffService');
+    // }
     //cập nhật dữ liệu mới vào SQL
 
     await pool.request()
-    .input('HinhAnh', sql.NVarChar, data.HinhAnh)
-    .input('MaXe', sql.Int, data.MaXe)
-    .input('LanMuaBaoHiem', sql.Int, data.LanMuaBaoHiem)
-    .input('NgayMuaBaoHiem', sql.Date, data.NgayMuaBaoHiem ==='null'? null : data.NgayMuaBaoHiem)
-    .input('ThoiGian', sql.Int, data.ThoiGian ==='null'? null : data.ThoiGian)
-    .input('LoaiBaoHiem', sql.NVarChar, data.LoaiBaoHiem ==='null'? null : data.LoaiBaoHiem)
-    .input('NguoiMuaBaoHiem', sql.NVarChar, data.NguoiMuaBaoHiem ==='null'? null : data.NguoiMuaBaoHiem)
-      .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung=='true' ? true : false)
+      .input('HinhAnh', sql.NVarChar, data.HinhAnh === 'null' ? null : data.HinhAnh)
+      .input('MaXe', sql.Int, data.MaXe)
+      .input('LanMuaBaoHiem', sql.Int, data.LanMuaBaoHiem)
+      .input('NgayMuaBaoHiem', sql.Date, data.NgayMuaBaoHiem === 'null' ? null : data.NgayMuaBaoHiem)
+      .input('ThoiGian', sql.Int, data.ThoiGian === 'null' ? null : data.ThoiGian)
+      .input('LoaiBaoHiem', sql.NVarChar, data.LoaiBaoHiem === 'null' ? null : data.LoaiBaoHiem)
+      .input('NguoiMuaBaoHiem', sql.NVarChar, data.NguoiMuaBaoHiem === 'null' ? null : data.NguoiMuaBaoHiem)
+      // .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung == 'true' ? true : false)
       .execute('service_updateInsurance_updateInsurance');
     return { success: true };
   } catch (error) {
@@ -335,13 +335,13 @@ async function deleteLocate(ID, ID2) {
 //xử lý thêm định vị
 async function insertLocate(data) {
   try {
-    if (data.TinhTrangApDung =='true') {
-      //nếu có áp dụng cái mới thì tắt áp dụng các cái cũ
-      await pool.request()
-        .input('tableName', sql.NVarChar, 'ChiTietDinhVi')
-        .input('MaXe', sql.Int, data.MaXe)
-        .execute('global_getOffService_getOffService');
-    }
+    // if (data.TinhTrangApDung == 'true') {
+    //   //nếu có áp dụng cái mới thì tắt áp dụng các cái cũ
+    //   await pool.request()
+    //     .input('tableName', sql.NVarChar, 'ChiTietDinhVi')
+    //     .input('MaXe', sql.Int, data.MaXe)
+    //     .execute('global_getOffService_getOffService');
+    // }
     // lấy lần gần đây nhất
     const layLanGanDay = await pool.request()
       .input('tableName', sql.NVarChar, 'ChiTietDinhVi')
@@ -362,7 +362,7 @@ async function insertLocate(data) {
       .input('UserNameDinhVi', sql.VarChar, data.UserNameDinhVi)
       .input('MatKhauDinhVi', sql.VarChar, data.MatKhauDinhVi)
       .input('NguoiMuaDinhVi', sql.NVarChar, data.NguoiMuaDinhVi)
-      .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung=='true' ? true : (LanMoi == 1 ? true : false))
+      // .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung == 'true' ? true : (LanMoi == 1 ? true : false))
       .execute('service_insertLocate_insertLocate');
     return { success: true };
   } catch (error) {
@@ -373,26 +373,26 @@ async function insertLocate(data) {
 //xử lý cập nhật định vị
 async function updateLocate(data) {
   try {
-    if (data.TinhTrangApDung =='true') {
-      //nếu có áp dụng cái mới thì tắt áp dụng các cái cũ
-      await pool.request()
-        .input('tableName', sql.NVarChar, 'ChiTietDinhVi')
-        .input('MaXe', sql.Int, data.MaXe)
-        .execute('global_getOffService_getOffService');
-    }
+    // if (data.TinhTrangApDung == 'true') {
+    //   //nếu có áp dụng cái mới thì tắt áp dụng các cái cũ
+    //   await pool.request()
+    //     .input('tableName', sql.NVarChar, 'ChiTietDinhVi')
+    //     .input('MaXe', sql.Int, data.MaXe)
+    //     .execute('global_getOffService_getOffService');
+    // }
     //cập nhật dữ liệu mới vào SQL
 
     await pool.request()
-    .input('HinhAnh', sql.NVarChar, data.HinhAnh)
+    .input('HinhAnh', sql.NVarChar, data.HinhAnh=== 'null' ? null : data.HinhAnh)
       .input('MaXe', sql.Int, data.MaXe)
       .input('LanMuaDinhVi', sql.Int, data.LanMuaDinhVi)
-      .input('NgayMua', sql.Date, data.NgayMua ==='null'? null : data.NgayMua)
-      .input('ThoiGian', sql.Int, data.ThoiGian ==='null'? null : data.ThoiGian)
-      .input('URLDinhVi', sql.NVarChar, data.URLDinhVi ==='null'? null : data.URLDinhVi)
-      .input('UserNameDinhVi', sql.VarChar, data.UserNameDinhVi ==='null'? null : data.UserNameDinhVi)
-      .input('MatKhauDinhVi', sql.VarChar, data.MatKhauDinhVi ==='null'? null : data.MatKhauDinhVi)
-      .input('NguoiMuaDinhVi', sql.NVarChar, data.NguoiMuaDinhVi ==='null'? null : data.NguoiMuaDinhVi)
-      .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung=='true' ? true : false)
+      .input('NgayMua', sql.Date, data.NgayMua === 'null' ? null : data.NgayMua)
+      .input('ThoiGian', sql.Int, data.ThoiGian === 'null' ? null : data.ThoiGian)
+      .input('URLDinhVi', sql.NVarChar, data.URLDinhVi === 'null' ? null : data.URLDinhVi)
+      .input('UserNameDinhVi', sql.VarChar, data.UserNameDinhVi === 'null' ? null : data.UserNameDinhVi)
+      .input('MatKhauDinhVi', sql.VarChar, data.MatKhauDinhVi === 'null' ? null : data.MatKhauDinhVi)
+      .input('NguoiMuaDinhVi', sql.NVarChar, data.NguoiMuaDinhVi === 'null' ? null : data.NguoiMuaDinhVi)
+      // .input('TinhTrangApDung', sql.Bit, data.TinhTrangApDung == 'true' ? true : false)
       .execute('service_updateLocate_updateLocate');
     return { success: true };
   } catch (error) {
@@ -406,18 +406,18 @@ module.exports = {
   insertRegistry: insertRegistry,
   deleteRegistry: deleteRegistry,
 
-  getEmblem:getEmblem,
-  deleteEmblem:deleteEmblem,
-  insertEmblem:insertEmblem,
-  updateEmblem:updateEmblem,
+  getEmblem: getEmblem,
+  deleteEmblem: deleteEmblem,
+  insertEmblem: insertEmblem,
+  updateEmblem: updateEmblem,
 
-  getInsurance:getInsurance,
-  deleteInsurance:deleteInsurance,
-  insertInsurance:insertInsurance,
-  updateInsurance:updateInsurance,
+  getInsurance: getInsurance,
+  deleteInsurance: deleteInsurance,
+  insertInsurance: insertInsurance,
+  updateInsurance: updateInsurance,
 
-  getLocate:getLocate,
-  deleteLocate:deleteLocate,
-  insertLocate:insertLocate,
-  updateLocate:updateLocate
+  getLocate: getLocate,
+  deleteLocate: deleteLocate,
+  insertLocate: insertLocate,
+  updateLocate: updateLocate
 };

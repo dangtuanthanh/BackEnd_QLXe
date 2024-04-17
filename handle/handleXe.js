@@ -105,8 +105,8 @@ async function getGroupTypeCar() {
 async function getCarByGroupTypeCar(MaNhomLoaiXe) {
   try {
     let result = await pool.request()
-    .input('MaNhomLoaiXe', sql.Int, MaNhomLoaiXe)
-    .execute('car_getGroupTypeCar_getCarByGroupTypeCar');
+      .input('MaNhomLoaiXe', sql.Int, MaNhomLoaiXe)
+      .execute('car_getGroupTypeCar_getCarByGroupTypeCar');
     return result.recordset;
   } catch (error) {
     throw error;
@@ -203,8 +203,8 @@ async function updateTypeCar(data) {
 async function getCarByTypeCar(MaLoaiXe) {
   try {
     let result = await pool.request()
-    .input('MaLoaiXe', sql.Int, MaLoaiXe)
-    .execute('car_getTypeCar_getCarByTypeCar');
+      .input('MaLoaiXe', sql.Int, MaLoaiXe)
+      .execute('car_getTypeCar_getCarByTypeCar');
     return result.recordset;
   } catch (error) {
     throw error;
@@ -415,7 +415,7 @@ async function updateMaintenance(data) {
     //cập nhật dữ liệu mới vào SQL
 
     await pool.request()
-      .input('HinhAnh', sql.NVarChar, data.HinhAnh)
+      .input('HinhAnh', sql.NVarChar, data.HinhAnh === 'null' ? null : data.HinhAnh)
       .input('MaXe', sql.Int, data.MaXe)
       .input('LanBaoDuong', sql.Int, data.LanBaoDuong)
       .input('MaHangMucBaoDuong', sql.Int, data.MaHangMucBaoDuong === 'null' ? null : data.MaHangMucBaoDuong)
@@ -508,12 +508,12 @@ module.exports = {
   insertStatusCar: insertStatusCar,
   deleteStatusCar: deleteStatusCar,
   getGroupTypeCar: getGroupTypeCar,
-  getCarByGroupTypeCar:getCarByGroupTypeCar,
+  getCarByGroupTypeCar: getCarByGroupTypeCar,
   deleteGroupTypeCar: deleteGroupTypeCar,
   insertGroupTypeCar: insertGroupTypeCar,
   updateGroupTypeCar: updateGroupTypeCar,
   getTypeCar: getTypeCar,
-  getCarByTypeCar:getCarByTypeCar,
+  getCarByTypeCar: getCarByTypeCar,
   deleteTypeCar: deleteTypeCar,
   insertTypeCar: insertTypeCar,
   updateTypeCar: updateTypeCar,
@@ -538,5 +538,5 @@ module.exports = {
   insertUsageHistory: insertUsageHistory,
   updateUsageHistory: updateUsageHistory,
 
-  getDetailContractByIDCar:getDetailContractByIDCar
+  getDetailContractByIDCar: getDetailContractByIDCar
 };
